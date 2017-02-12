@@ -34,9 +34,9 @@ public interface InputDataFormatter {
 	public HashMap<Integer,List<String>> getColHeaderIdxToColsUnqVals();
 	
 	/**
-	 * Gets the column header index to column's unique values.
+	 * Gets the column header index to column's value's encoded values.
 	 *
-	 * @return the map for column header to column's unique values.
+	 * @return the map for column header to column's value's encoded values.
 	 */
 	public HashMap<Integer,List<Float>> getColHeaderIdxToColsEncodingVals();
 	
@@ -44,7 +44,7 @@ public interface InputDataFormatter {
 	/**
 	 * Gets the column headers.
 	 *
-	 * @return the columns headers array
+	 * @return the columns headers array in the order of occurence.
 	 */
 	public String[] getColumnHeaders();
 

@@ -6,8 +6,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class InputReaderEncoder implements InputDataFormatter{
 
@@ -32,8 +34,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 */
 	@Override
 	public double getColumnsCount() {
-		if(mColsCnt==-1){
-			System.out.println("");
+		if(mHeaders!=null){
+			mColsCnt = mHeaders.length; 
 		}
 		return mColsCnt;
 	}
@@ -79,6 +81,18 @@ public class InputReaderEncoder implements InputDataFormatter{
 			}	
 		}
 	}
+	
+	/**
+	 * Utility Function
+	 * Prints the encoded transactions.
+	 */
+	public void printEncodedTransactions(){
+		for(int idx=0;idx<mEncodedTxns.size();idx++){
+			Set<Float> sets = mEncodedTxns.get(idx);
+			TreeSet sortedSet = new TreeSet<Float>(sets);
+			System.out.println(sortedSet);
+		}
+	}
 
 	/** 
 	 * @throws IOException 
@@ -101,10 +115,16 @@ public class InputReaderEncoder implements InputDataFormatter{
 		 * each column. Sets mColHeaderIdxToColsUnqVals.
 		 */
 		setColHeadersAndDistinctColVals();
+		
+		/* Step 2:
+		 * Build encoding for column values
+		 */
 		encodeColumns();
 		
-
-
+		/* Step 3:
+		 * Encode transactions
+		 */
+		encodeTransactions();
 	}
 	
 	
@@ -131,12 +151,54 @@ public class InputReaderEncoder implements InputDataFormatter{
 
 	/**
 	 * Encode transactions.
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	private void encodeTransactions(){
+	private void encodeTransactions() throws FileNotFoundException, IOException{
+		
+		String delim = getDelimiter(mDelimiter);
+		mEncodedTxns = new ArrayList<Set<Float>>();
+		try(BufferedReader br= new BufferedReader(new FileReader(mFilepath))){
+			double lineCount=0;
+			for(String line; (line = br.readLine()) != null;){
 
+				line = preProcessLine(line);
+				if(mHasHeader &&(lineCount==0)){
+					lineCount++;
+					continue;
+				}
+				
+				
+				/* Check if the row has equal number of tokens
+				 * as mentioned in header. Further, process line to 
+				 * to find unique items in each column*/
+				String[] colTokens = line.toLowerCase().split(delim);
+				if(isValidRow(colTokens.length)){
+					Set<Float> txnSet = new HashSet<Float>();
+					for(int idx=0;idx<colTokens.length;idx++){
+						Float encVal = getTokenEncodeValue(idx,colTokens[idx]);
+						txnSet.add(encVal);
+					}
+					mEncodedTxns.add(txnSet);
+				}
+			}
+		}
 	}
 	
 	
+	/**
+	 * Gets the token encode value.
+	 *
+	 * @param idx the idx
+	 * @param token the token
+	 * @return the token encode value
+	 */
+	private Float getTokenEncodeValue(int idx, String token) {
+		List<String> colVals= mColHeaderIdxToColsUnqVals.get(idx);
+		int tokenIdx = colVals.indexOf(token);
+		return mColHeaderIdxToColsEncoding.get(idx).get(tokenIdx);
+	}
+
 	/**
 	 * Encode columns
 	 */

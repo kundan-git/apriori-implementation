@@ -14,7 +14,7 @@ import ca.dal.apriori.inputreader.InputReaderEncoder;
 public class Main {
 
 	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
-		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
+		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data2";
 		
 		/*
 		 * Load the data and encode it for Aprioi algorithm
@@ -22,5 +22,6 @@ public class Main {
 		InputReaderEncoder data= new InputReaderEncoder(filepath,InputDataDelimiters.SPACE,true);
 		
 		data.printHeadersAndUniqueColVals();
+		data.printEncodedTransactions();
 	}
 }
