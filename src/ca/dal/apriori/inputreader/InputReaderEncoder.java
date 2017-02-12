@@ -11,11 +11,30 @@ import java.util.Set;
 
 public class InputReaderEncoder implements InputDataFormatter{
 
+	/**
+	 * Instantiates a new input reader encoder.
+	 *
+	 * @param filepath the filepath
+	 * @param delimiter the delimiter
+	 * @param hasHeader the has header
+	 * @throws FileNotFoundException the file not found exception
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws InputReaderAndEncoderException 
+	 */
+	public InputReaderEncoder(String filepath, InputDataDelimiters delimiter, boolean hasHeader) 
+			throws FileNotFoundException, IOException, InputReaderAndEncoderException {
+
+		loadAndEncodeDataFromFile(filepath,delimiter,hasHeader);
+	}
+
 	/** 
 	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getColumnsCount()
 	 */
 	@Override
 	public double getColumnsCount() {
+		if(mColsCnt==-1){
+			System.out.println("");
+		}
 		return mColsCnt;
 	}
 
@@ -31,8 +50,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getColHeaderToColsUnqVals()
 	 */
 	@Override
-	public HashMap<String, List<String>> getColHeaderToColsUnqVals() {
-		return mColHeaderToColsUnqVals;
+	public HashMap<Integer, List<String>> getColHeaderIdxToColsUnqVals() {
+		return mColHeaderIdxToColsUnqVals;
 	}
 
 	/**
@@ -48,14 +67,15 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * Prints the headers and unique column values.
 	 */
 	public void printHeadersAndUniqueColVals(){
-		if(mColHeaderToColsUnqVals !=null){
-			for(String key:mColHeaderToColsUnqVals.keySet()){
+		if(mColHeaderIdxToColsUnqVals !=null){
+			for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
 				String colsAsStr ="";
-				List<String> colVals=mColHeaderToColsUnqVals.get(key); 
+				List<String> colVals=mColHeaderIdxToColsUnqVals.get(key);
+				List<Float> encodedVals = mColHeaderIdxToColsEncoding.get(key);
 				for(int i=0; i<colVals.size();i++){
-					colsAsStr = colsAsStr+","+colVals.get(i);
+					colsAsStr = colsAsStr+colVals.get(i)+"("+encodedVals.get(i)+"), ";
 				}
-				System.out.println(key+"--->"+colsAsStr);
+				System.out.println(mHeaders[key]+"("+key+")"+"--->"+colsAsStr);
 			}	
 		}
 	}
@@ -63,13 +83,14 @@ public class InputReaderEncoder implements InputDataFormatter{
 	/** 
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
+	 * @throws InputReaderAndEncoderException 
 	 * @see ca.dal.apriori.inputreader.InputDataFormatter#loadDataFromFile(java.lang.String)
 	 */
 	@Override
 	public void loadAndEncodeDataFromFile(
 			String filepath, InputDataDelimiters delimiter, boolean hasHeader) 
-					throws FileNotFoundException, IOException {
-
+					throws FileNotFoundException, IOException, InputReaderAndEncoderException {
+		
 		/*Set private members*/
 		mFilepath = filepath;
 		mDelimiter=delimiter;
@@ -77,13 +98,16 @@ public class InputReaderEncoder implements InputDataFormatter{
 
 		/* Step 1:
 		 * Get the columns headers and the distinct values present in
-		 * each column. Sets mColHeaderToColsUnqVals.
+		 * each column. Sets mColHeaderIdxToColsUnqVals.
 		 */
-		int ret = setColHeadersAndDistinctColVals(); 
-
+		setColHeadersAndDistinctColVals();
+		encodeColumns();
+		
 
 
 	}
+	
+	
 
 	/*
 	 * Private Member Variables
@@ -92,7 +116,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 	private int mColsCnt = -1;
 	private List<Set<Float>> mEncodedTxns= null;
 	private String[] mHeaders=null;
-	private HashMap<String,List<String>> mColHeaderToColsUnqVals=null;
+	private HashMap<Integer,List<String>> mColHeaderIdxToColsUnqVals=null;
+	private HashMap<Integer,List<Float>> mColHeaderIdxToColsEncoding=null;
 	private String mFilepath=null;
 	private InputDataDelimiters mDelimiter=null;
 	private boolean mHasHeader=true;
@@ -109,6 +134,27 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 */
 	private void encodeTransactions(){
 
+	}
+	
+	
+	/**
+	 * Encode columns
+	 */
+	private void encodeColumns(){
+		
+		mColHeaderIdxToColsEncoding = new HashMap<Integer,List<Float>>();
+		for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
+			int unqItemsCount= mColHeaderIdxToColsUnqVals.get(key).size();
+			int basePower = (int) Math.ceil((float) (Math.log(unqItemsCount) / Math.log(10)));
+			float step = (float) (1/Math.pow(10,basePower));
+			List<Float> encodedList = new ArrayList<Float>();
+			Float lastNum= (float)key;
+			for(int i=0;i<mColHeaderIdxToColsUnqVals.get(key).size();i++){
+				lastNum = lastNum+step;
+				encodedList.add(lastNum);
+			}
+			mColHeaderIdxToColsEncoding.put(key, encodedList);
+		}
 	}
 
 
@@ -138,7 +184,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 		}
 		return line;
 	}
-	
+
 	/**
 	 * Gets the delimiter.
 	 *
@@ -165,30 +211,31 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * @param hasHeader the has header
 	 * @throws FileNotFoundException the file not found exception
 	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @exception Populates mHeaders and mColHeaderIdxToColsUnqVals.
 	 * @return 0 on success, -1 on failure
 	 */
-	private int setColHeadersAndDistinctColVals() 
-			throws FileNotFoundException, IOException{
+	private void setColHeadersAndDistinctColVals() 
+			throws FileNotFoundException, IOException,InputReaderAndEncoderException{
 
 		/* Read the file and process line by line*/
 		int colCount=0;
-		mColHeaderToColsUnqVals = new HashMap<String,List<String>>();
+		mColHeaderIdxToColsUnqVals = new HashMap<Integer,List<String>>();
 		String delim = getDelimiter(mDelimiter);
-		
+
 		try(BufferedReader br= new BufferedReader(new FileReader(mFilepath))){
 			for(String line; (line = br.readLine()) != null;){
 
 				line = preProcessLine(line);
-				
+
 				if((colCount==0) && mHasHeader){
-					
+
 					/* If first line and file has header*/
 					mHeaders = line.split(delim);
 					if(mHeaders.length ==1){
-						System.out.println("ERROR: Insufficient columns! Check if correct delimiter is specified.");
-						return -1;
+						throw new InputReaderAndEncoderException("Insufficient columns! "
+								+ "Check if correct delimiter is specified."); 
 					}
-					
+
 				} else if((colCount==0) && !mHasHeader){
 					/* If first line and file does not have header*/
 					int colCnt= line.split(delim).length;
@@ -196,26 +243,26 @@ public class InputReaderEncoder implements InputDataFormatter{
 					for(int i=0; i<colCnt;i++){
 						mHeaders[i] = "col_"+i;
 					}
-					
+
 				}else{
 
 					/* Check if the row has equal number of tokens
 					 * as mentioned in header. Further, process line to 
 					 * to find unique items in each column*/
 					String[] colTokens = line.toLowerCase().split(delim);
-					
+
 					if(isValidRow(colTokens.length)){
 						for(int i=0; i<colTokens.length;i++){
-							List<String> existingColVals = mColHeaderToColsUnqVals.get(mHeaders[i]);
+							List<String> existingColVals = mColHeaderIdxToColsUnqVals.get(i);
 							String token = colTokens[i].trim();
 
 							if(existingColVals==null){
 								List<String> vals= new ArrayList<String>();
 								vals.add(token);
-								mColHeaderToColsUnqVals.put(mHeaders[i], vals);	
+								mColHeaderIdxToColsUnqVals.put(i, vals);	
 							}else if (!existingColVals.contains(token)){
 								existingColVals.add(token);
-								mColHeaderToColsUnqVals.put(mHeaders[i], existingColVals);
+								mColHeaderIdxToColsUnqVals.put(i, existingColVals);
 							}
 						}	
 					}else if(line.equals("\n")){
@@ -226,7 +273,15 @@ public class InputReaderEncoder implements InputDataFormatter{
 				colCount++;
 			}
 		}
-		return 0;
 	}
 
+	@Override
+	public HashMap<Integer, List<Float>> getColHeaderIdxToColsEncodingVals() {
+		return mColHeaderIdxToColsEncoding;
+	}
+
+	@Override
+	public String[] getColumnHeaders() {
+		return mHeaders;
+	}
 }

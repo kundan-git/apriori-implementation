@@ -1,7 +1,11 @@
 package sampleapp;
 
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import ca.dal.apriori.inputreader.InputDataDelimiters;
+import ca.dal.apriori.inputreader.InputReaderAndEncoderException;
 import ca.dal.apriori.inputreader.InputReaderEncoder;
 
 /**
@@ -9,18 +13,14 @@ import ca.dal.apriori.inputreader.InputReaderEncoder;
  */
 public class Main {
 
-	public static void main(String[] argv){
+	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
 		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
 		
-		InputReaderEncoder data= new InputReaderEncoder();
+		/*
+		 * Load the data and encode it for Aprioi algorithm
+		 */
+		InputReaderEncoder data= new InputReaderEncoder(filepath,InputDataDelimiters.SPACE,true);
 		
-		try {
-			data.loadAndEncodeDataFromFile(filepath,InputDataDelimiters.SPACE,true);
-			data.printHeadersAndUniqueColVals();
-			
-		} catch (Exception e) {
-			System.out.println("EXCEPTION!!");
-			e.printStackTrace();
-		}
+		data.printHeadersAndUniqueColVals();
 	}
 }

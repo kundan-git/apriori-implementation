@@ -27,11 +27,26 @@ public interface InputDataFormatter {
 
 
 	/**
-	 * Gets the column header to column's unique values.
+	 * Gets the column header index to column's unique values.
 	 *
 	 * @return the map for column header to column's unique values.
 	 */
-	public HashMap<String,List<String>> getColHeaderToColsUnqVals();
+	public HashMap<Integer,List<String>> getColHeaderIdxToColsUnqVals();
+	
+	/**
+	 * Gets the column header index to column's unique values.
+	 *
+	 * @return the map for column header to column's unique values.
+	 */
+	public HashMap<Integer,List<Float>> getColHeaderIdxToColsEncodingVals();
+	
+	
+	/**
+	 * Gets the column headers.
+	 *
+	 * @return the columns headers array
+	 */
+	public String[] getColumnHeaders();
 
 	/**
 	 * Gets the encoded transactions.
@@ -50,6 +65,6 @@ public interface InputDataFormatter {
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	public void	loadAndEncodeDataFromFile(String filename,InputDataDelimiters delimiter,boolean hasHeader)  
-			throws FileNotFoundException, IOException ;
+			throws FileNotFoundException, IOException,InputReaderAndEncoderException ;
 
 }
