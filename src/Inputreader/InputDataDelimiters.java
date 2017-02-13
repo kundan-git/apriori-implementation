@@ -1,4 +1,4 @@
-package ca.dal.apriori.inputreader;
+package Inputreader;
 
 public enum InputDataDelimiters {
 	SPACE,COMMA,TAB

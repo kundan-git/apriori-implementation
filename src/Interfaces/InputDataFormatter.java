@@ -1,10 +1,13 @@
-package ca.dal.apriori.inputreader;
+package Interfaces;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
+import Inputreader.InputDataDelimiters;
+import Exceptions.InputReaderAndEncoderException;
 
 /**
  * The Interface InputDataFormatter.
@@ -25,7 +28,13 @@ public interface InputDataFormatter {
 	 */
 	public double getTransactionsCount();
 
-
+	/**
+	 * Gets the column headers.
+	 *
+	 * @return the columns headers array in the order of occurence.
+	 */
+	public String[] getColumnHeaders();
+	
 	/**
 	 * Gets the column header index to column's unique values.
 	 *
@@ -39,14 +48,6 @@ public interface InputDataFormatter {
 	 * @return the map for column header to column's value's encoded values.
 	 */
 	public HashMap<Integer,List<Float>> getColHeaderIdxToColsEncodingVals();
-	
-	
-	/**
-	 * Gets the column headers.
-	 *
-	 * @return the columns headers array in the order of occurence.
-	 */
-	public String[] getColumnHeaders();
 
 	/**
 	 * Gets the encoded transactions.

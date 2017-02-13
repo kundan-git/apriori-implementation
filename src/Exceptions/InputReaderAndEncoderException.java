@@ -1,4 +1,4 @@
-package ca.dal.apriori.inputreader;
+package Exceptions;
 
 public class InputReaderAndEncoderException extends Exception{
 	

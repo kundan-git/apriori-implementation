@@ -1,4 +1,4 @@
-package ca.dal.apriori.inputreader;
+package Inputreader;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -10,6 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import Interfaces.InputDataFormatter;
+import Exceptions.InputReaderAndEncoderException;
 
 public class InputReaderEncoder implements InputDataFormatter{
 
@@ -30,7 +33,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	}
 
 	/** 
-	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getColumnsCount()
+	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getColumnsCount()
 	 */
 	@Override
 	public double getColumnsCount() {
@@ -41,7 +44,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	}
 
 	/** 
-	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getTransactionsCount()
+	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getTransactionsCount()
 	 */
 	@Override
 	public double getTransactionsCount() {
@@ -49,7 +52,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	}
 
 	/** 
-	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getColHeaderToColsUnqVals()
+	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getColHeaderToColsUnqVals()
 	 */
 	@Override
 	public HashMap<Integer, List<String>> getColHeaderIdxToColsUnqVals() {
@@ -57,7 +60,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	}
 
 	/**
-	 * @see ca.dal.apriori.inputreader.InputDataFormatter#getEncodedTransactions()
+	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getEncodedTransactions()
 	 */
 	@Override
 	public List<Set<Float>> getEncodedTransactions() {
@@ -86,6 +89,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * Utility Function
 	 * Prints the encoded transactions.
 	 */
+	@SuppressWarnings("rawtypes")
 	public void printEncodedTransactions(){
 		for(int idx=0;idx<mEncodedTxns.size();idx++){
 			Set<Float> sets = mEncodedTxns.get(idx);
@@ -98,7 +102,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 * @throws InputReaderAndEncoderException 
-	 * @see ca.dal.apriori.inputreader.InputDataFormatter#loadDataFromFile(java.lang.String)
+	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#loadDataFromFile(java.lang.String)
 	 */
 	@Override
 	public void loadAndEncodeDataFromFile(
@@ -335,6 +339,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 				colCount++;
 			}
 		}
+		mTxnsCnt =colCount;
 	}
 
 	@Override
