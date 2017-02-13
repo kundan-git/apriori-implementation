@@ -19,24 +19,27 @@ public class Main {
 
 	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
 		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
-		
+
 		/*
-		 * Load the data and encode it for Aprioi algorithm
+		 * Step 1: Load the data and encode it for Aprioi algorithm
 		 */
 		InputReaderEncoder data= new InputReaderEncoder(filepath,InputDataDelimiters.SPACE,true);
 		HashMap<Integer,List<Float>> colHeaderIdxToColsEncodingVals = data.getColHeaderIdxToColsEncodingVals();
 		List<Set<Float>> encodedTransactions = data.getEncodedTransactions();
 		data.printHeadersAndUniqueColVals();
-		//data.printEncodedTransactions();
-		
+		data.printEncodedTransactions();
+
 		/*
-		 * Get the 1-ItemSet and its support value
-		 * */
-		ItemSetBuilder itemSetBuilder = new ItemSetBuilder(colHeaderIdxToColsEncodingVals, 0, 0);
-		List<Set<Float>> oneItemSet = itemSetBuilder.getOneItemset();
-		List<Double> oneItemSupportSet = itemSetBuilder.getSupportSet(oneItemSet, encodedTransactions);
-		itemSetBuilder.printItemSetAndSupport(oneItemSet, oneItemSupportSet);
+		 * Step 2: Get the 1-ItemSet and its support value
+		 */
+		ItemSetBuilder itemSetBuilder = new ItemSetBuilder(colHeaderIdxToColsEncodingVals,encodedTransactions,
+				(float)0.3, 0);
+		itemSetBuilder.initializeItemSets();
 		
+		itemSetBuilder.printItemSetAndSupport(itemSetBuilder.getOneCandidateItemsSet());
 		
+		System.out.println("\nFrequent Item Set");
+		itemSetBuilder.printItemSetAndSupport(itemSetBuilder.getOneFrequentItemsSet());
+
 	}
 }

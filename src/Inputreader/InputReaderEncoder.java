@@ -72,6 +72,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * Prints the headers and unique column values.
 	 */
 	public void printHeadersAndUniqueColVals(){
+		System.out.println("\n********** Encoded Distinct Items*************");
 		if(mColHeaderIdxToColsUnqVals !=null){
 			for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
 				String colsAsStr ="";
@@ -91,6 +92,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 */
 	@SuppressWarnings("rawtypes")
 	public void printEncodedTransactions(){
+		
+		System.out.println("\n********** Encoded Transaction*************");
 		for(int idx=0;idx<mEncodedTxns.size();idx++){
 			Set<Float> sets = mEncodedTxns.get(idx);
 			TreeSet sortedSet = new TreeSet<Float>(sets);
