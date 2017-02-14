@@ -21,14 +21,14 @@ public interface ItemSetGenerator {
 	public HashMap<Set<Float>,Double> getOneFrequentItemsSet();
 	
 	/**
-	 * Gets the k candidate items set.
-	 *
+	 * Gets the k candidate items set for k>=2.
+	 * 
 	 * @return the k candidate items set
 	 */
-	public HashMap<Set<Float>,Double> getKCandidateItemsSet();
+	public HashMap<Set<Float>,Double> getKCandidateItemsSet(HashMap<Set<Float>, Double> ipSetMap);
 	
 	/**
-	 * Gets the k frequent items set.
+	 * Gets the k frequent items set for k>=2.
 	 *
 	 * @return the k frequent items set
 	 */

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -33,10 +34,8 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	public int initializeItemSets(){
 		/* Generate 1-item candidate set*/
 		HashMap<Set<Float>, Double> ciSet= setOneCandidateItemsSet();
-		
 		/* Generate 1-item frequent set*/
 		HashMap<Set<Float>, Double> fiSet=setOneFrequentItemsSet();
-		
 		if((ciSet!=null)&& (fiSet!=null)){
 			return 0;
 		}
@@ -56,11 +55,104 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	}
 	
 	
-
+	private Set<Float> generateKPlus1CandidateSet(Set<Float> itemSet1,
+			Set<Float> itemSet2,List<Set<Float>> prevFreqSets){
+		Set<Float> kPlusOneSet = null;
+		
+		Set<Float> intersection = new HashSet<Float>(itemSet1);
+		
+		//System.out.println("\nPre-intersection:"+intersection+" Set2:"+itemSet2);
+		intersection.retainAll(itemSet2);
+		//System.out.println("Post-intersection:"+intersection);
+		
+		/* Intersection size will be 2 if both sets have k-1 identical items*/
+		if(intersection.size()==itemSet1.size()-1){
+			
+			/* Check if the intersection leaves with item from the same class.
+			 * Note that two k-itemset p and q are joinable iff p and q have k-1 identical 
+			 * attribute-value pairs and different attributes in one attribute-value pair.
+			 */	
+			Set<Float> newItems = new HashSet<Float>(itemSet1);
+			newItems.addAll(itemSet2);
+			newItems.removeAll(intersection);
+			List<Float> newItemsList = new ArrayList<Float>(newItems);
+			//System.out.println(newItems);
+			
+			if(newItemsList.get(0).intValue() != newItemsList.get(1).intValue()){
+				kPlusOneSet = new HashSet<Float>();
+				kPlusOneSet.addAll(itemSet1);
+				kPlusOneSet.removeAll(itemSet2);
+				kPlusOneSet.addAll(itemSet2);
+			}
+		}
+		//System.out.println(kPlusOneSet);
+		return kPlusOneSet;
+	}
+	
+	private List<Set<Float>> getAllSubsets(List<Float> superSetList, int subSetSize){
+		Map<Set<Float>,Integer> keyToVal = new HashMap<Set<Float>,Integer>();  
+		int size = superSetList.size();
+        for(int i = 0; i < (1<<size); i++)
+        {
+        	Set<Float> oneSet = new HashSet<Float>();
+            for (int j = 0; j < size; j++){
+                if ((i & (1 << j)) > 0){
+                	oneSet.add(superSetList.get(j));
+                }
+            }
+            if(oneSet.size() == subSetSize){
+            	keyToVal.put(oneSet, 0);
+            }
+        }
+		return new ArrayList<Set<Float>>(keyToVal.keySet());
+	}
+	
+	
 	@Override
-	public HashMap<Set<Float>, Double> getKCandidateItemsSet() {
-		// TODO Auto-generated method stub
-		return null;
+	public HashMap<Set<Float>, Double> getKCandidateItemsSet(HashMap<Set<Float>, Double> ipSetMap) {
+		HashMap<Set<Float>, Double> opSetMap = new HashMap<Set<Float>, Double>();
+		
+		List<Set<Float>> unprunedCandidateSets = new ArrayList<Set<Float>>();
+		List<Set<Float>> prevFreqSets = new ArrayList<>(ipSetMap.keySet());
+		
+		/*
+		 * For each pair of sets, check if they can be joined.
+		 * If join-able get the joined set. 
+		 */
+		for(int i=0;i<prevFreqSets.size();i++ ){
+			Set<Float> itemSet1 = prevFreqSets.get(i);
+			for(int j=i+1;j<prevFreqSets.size();j++ ){
+				Set<Float> itemSet2 = prevFreqSets.get(j);
+				Set<Float> newCKItemSet = generateKPlus1CandidateSet(itemSet1,itemSet2,prevFreqSets);
+				if(newCKItemSet != null){
+					unprunedCandidateSets.add(newCKItemSet);
+				}
+			}
+		}
+		
+		
+		/*
+		 * Prune candidate item-set
+		 */
+		for(int i=0;i<unprunedCandidateSets.size();i++){
+			Set<Float> testSet = unprunedCandidateSets.get(i);
+			List<Float> superSetList = new ArrayList<>(testSet);
+			List<Set<Float>> subSets= getAllSubsets(superSetList, superSetList.size()-1);
+			boolean isSubSetMissing = false;
+			
+			for(int j=0;j<subSets.size();j++){
+				if(prevFreqSets.contains(subSets.get(j))){
+					continue;
+				}else{
+					isSubSetMissing = true;
+					break;
+				}
+			}
+			if(!isSubSetMissing){
+				opSetMap.put(testSet, getSupportValueForItemSet(testSet));
+			}
+		}
+		return opSetMap;
 	}
 
 	@Override
@@ -123,17 +215,16 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	}
 
 
-
-
-
-	private List<Set<Float>> getPrunedItemset(List<Set<Float>> itemSet) {
-		double txnsCnt = mEncodedTransactions.size();
-		List<Set<Float>> prunedItemSet = new ArrayList<Set<Float>>();
-		for(int idx=0; idx<itemSet.size();idx++){
-			Set<Float> item = itemSet.get(idx);
-			//TOOD
+	public HashMap<Set<Float>, Double> getPrunedItemset(HashMap<Set<Float>, Double> ipSetToSupport) {
+		HashMap<Set<Float>, Double> opSetToSupport = new HashMap<Set<Float>, Double>();
+		for(Set<Float> setAsKey:ipSetToSupport.keySet()){
+			Double supVal = ipSetToSupport.get(setAsKey);
+			float support = (float) (supVal / mTxnsCount);
+			if(support >= mMinSup){
+				opSetToSupport.put(setAsKey,supVal);
+			}
 		}
-		return prunedItemSet;
+		return opSetToSupport;
 	}
 
 	/**
@@ -143,14 +234,14 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	 * @return the support value for item set
 	 */
 	@SuppressWarnings("unchecked")
-	private double getSupportValueForItemSet(Set<Float> itemSet){
+	public double getSupportValueForItemSet(Set<Float> itemSet){
 		Double sup = (double) 0;
 		for(int idx=0;idx<mEncodedTransactions.size();idx++){			
 			Set<Float> txnSet = mEncodedTransactions.get(idx);
 			@SuppressWarnings({ "rawtypes" })
-			Set intersect = new TreeSet(txnSet);
+			Set<Float> intersect = new TreeSet<Float>(txnSet);
 			intersect.retainAll(itemSet);
-			if(intersect.size() >0){
+			if(intersect.size() == itemSet.size()){
 				sup++;
 			}
 		}
@@ -166,7 +257,5 @@ public class ItemSetBuilder implements ItemSetGenerator{
 		}
 		return supSet;
 	}
-
-
 
 }
