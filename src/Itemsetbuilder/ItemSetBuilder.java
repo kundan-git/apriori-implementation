@@ -13,7 +13,6 @@ import Interfaces.ItemSetGenerator;
 public class ItemSetBuilder implements ItemSetGenerator{
 
 	private float mMinSup;
-	private float mMinConf;
 	private List<Set<Float>> mEncodedTransactions=null;
 	private HashMap<Integer,List<Float>> mColHeaderIdxToColsEncodingVals= null;
 	private HashMap<Set<Float>, Double> mOneItemSetToSup =null;
@@ -27,7 +26,6 @@ public class ItemSetBuilder implements ItemSetGenerator{
 		mColHeaderIdxToColsEncodingVals = colHeaderIdxToColsEncodingVals;
 		mEncodedTransactions = encodedTransactions;
 		mMinSup = minSup;
-		mMinConf=minConf;
 		mTxnsCount = mEncodedTransactions.size();
 	}
 
@@ -163,7 +161,7 @@ public class ItemSetBuilder implements ItemSetGenerator{
 
 
 	public void printItemSetAndSupport(HashMap<Set<Float>, Double> itemSetToSupport){
-		System.out.println("\n*********ItemSet with Support Values*********");
+		System.out.println("*********ItemSet with Support Values*********");
 		for(Set<Float> setAsKey: itemSetToSupport.keySet()){
 			System.out.println(setAsKey+" ---> "+itemSetToSupport.get(setAsKey));
 		}
@@ -255,6 +253,26 @@ public class ItemSetBuilder implements ItemSetGenerator{
 			supSet.add(getSupportValueForItemSet(itSet));
 		}
 		return supSet;
+	}
+
+	@Override
+	public HashMap<Set<Float>, Double> getTwoItemsCandidateSet(HashMap<Set<Float>, Double> oneItemFrequentSet) {
+		List<Set<Float>> oneItemSetKeys = new ArrayList<Set<Float>>(oneItemFrequentSet.keySet());
+		HashMap<Set<Float>, Double> twoItemCandidateSet = new HashMap<Set<Float>, Double>(); 
+		for(int i=0;i<oneItemSetKeys.size();i++){
+			for(int j=i+1;j<oneItemSetKeys.size();j++){
+				
+				Set<Float> set1 = new TreeSet<Float>(oneItemSetKeys.get(i));
+				set1.addAll(oneItemSetKeys.get(j));
+				List<Float> keyPairs = new ArrayList<Float>(set1);
+				if (keyPairs.size()>1){
+					if( keyPairs.get(0).intValue() != keyPairs.get(1).intValue()){
+						twoItemCandidateSet.put(set1, getSupportValueForItemSet(set1));	
+					}	
+				}
+			}
+		}
+		return twoItemCandidateSet;
 	}
 
 }

@@ -43,11 +43,11 @@ public interface InputDataFormatter {
 	public HashMap<Integer,List<String>> getColHeaderIdxToColsUnqVals();
 	
 	/**
-	 * Gets the column header index to column's value's encoded values.
+	 * Gets the column header index to column's distinct value's encoded values.
 	 *
 	 * @return the map for column header to column's value's encoded values.
 	 */
-	public HashMap<Integer,List<Float>> getColHeaderIdxToColsEncodingVals();
+	public HashMap<Integer,List<Float>> getColHeaderIdxToEncodedDistinctVals();
 
 	/**
 	 * Gets the encoded transactions.

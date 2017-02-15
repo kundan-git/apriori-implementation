@@ -67,6 +67,27 @@ public class InputReaderEncoder implements InputDataFormatter{
 		return mEncodedTxns;
 	}
 
+	
+	/**
+	 * Generate column header and distinct value map.
+	 */
+	private void generateColumnHeaderAndDistinctValueMap(){
+		mEncodeHeaderToName = new HashMap<Integer, String>();
+		mEncodeColsToName = new HashMap<Float, String>();
+		
+		if(mColHeaderIdxToColsUnqVals !=null){
+			for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
+				List<String> colVals=mColHeaderIdxToColsUnqVals.get(key);
+				List<Float> encodedVals = mColHeaderIdxToColsEncoding.get(key);
+				for(int i=0; i<colVals.size();i++){
+					mEncodeColsToName.put(encodedVals.get(i), colVals.get(i));
+				}
+				mEncodeHeaderToName.put(key, mHeaders[key]);
+			}	
+		}
+	}
+	
+	
 	/**
 	 * Utility function
 	 * Prints the headers and unique column values.
@@ -132,10 +153,28 @@ public class InputReaderEncoder implements InputDataFormatter{
 		 * Encode transactions
 		 */
 		encodeTransactions();
+		generateColumnHeaderAndDistinctValueMap();
 	}
 	
 	
+	/**
+	 * Gets the encoded columns to name map.
+	 *
+	 * @return the encode columns to name map.
+	 */
+	public HashMap<Float, String> getEncodeColsToName() {
+		return mEncodeColsToName;
+	}
 
+	/**
+	 * Gets the encoded header to name map.
+	 *
+	 * @return the encoded header to name map.
+	 */
+	public HashMap<Integer, String> getEncodeHeaderToName() {
+		return mEncodeHeaderToName;
+	}
+	
 	/*
 	 * Private Member Variables
 	 */
@@ -145,6 +184,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 	private String[] mHeaders=null;
 	private HashMap<Integer,List<String>> mColHeaderIdxToColsUnqVals=null;
 	private HashMap<Integer,List<Float>> mColHeaderIdxToColsEncoding=null;
+	HashMap<Integer, String> mEncodeHeaderToName = null;
+	HashMap<Float, String> mEncodeColsToName = null;
 	private String mFilepath=null;
 	private InputDataDelimiters mDelimiter=null;
 	private boolean mHasHeader=true;
@@ -346,7 +387,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	}
 
 	@Override
-	public HashMap<Integer, List<Float>> getColHeaderIdxToColsEncodingVals() {
+	public HashMap<Integer, List<Float>> getColHeaderIdxToEncodedDistinctVals() {
 		return mColHeaderIdxToColsEncoding;
 	}
 

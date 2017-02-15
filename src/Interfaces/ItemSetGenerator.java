@@ -13,12 +13,20 @@ public interface ItemSetGenerator {
 	 */
 	public HashMap<Set<Float>,Double> getOneCandidateItemsSet();
 	
+	
 	/**
 	 * Gets the one frequent items set.
 	 *
 	 * @return the one frequent items set
 	 */
 	public HashMap<Set<Float>,Double> getOneFrequentItemsSet();
+	
+	/**
+	 * Gets the two items candidate set.
+	 *
+	 * @return the two items candidate set
+	 */
+	public HashMap<Set<Float>,Double> getTwoItemsCandidateSet(HashMap<Set<Float>, Double> oneItemFrequentSet);
 	
 	/**
 	 * Gets the k candidate items set for k>=2.
