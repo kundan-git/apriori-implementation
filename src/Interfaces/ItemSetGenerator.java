@@ -32,6 +32,6 @@ public interface ItemSetGenerator {
 	 *
 	 * @return the k frequent items set
 	 */
-	public HashMap<Set<Float>,Double> getKFrequentItemsSet();
+	public HashMap<Set<Float>,Double> getKFrequentItemsSet(HashMap<Set<Float>, Double> kCandidateSet);
 	
 }

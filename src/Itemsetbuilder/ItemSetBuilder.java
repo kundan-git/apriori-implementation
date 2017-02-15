@@ -156,9 +156,8 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	}
 
 	@Override
-	public HashMap<Set<Float>, Double> getKFrequentItemsSet() {
-		// TODO Auto-generated method stub
-		return null;
+	public HashMap<Set<Float>, Double> getKFrequentItemsSet(HashMap<Set<Float>, Double> kCandidateSet) {
+		return getPrunedItemset(kCandidateSet);
 	}
 
 
@@ -215,7 +214,7 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	}
 
 
-	public HashMap<Set<Float>, Double> getPrunedItemset(HashMap<Set<Float>, Double> ipSetToSupport) {
+	private HashMap<Set<Float>, Double> getPrunedItemset(HashMap<Set<Float>, Double> ipSetToSupport) {
 		HashMap<Set<Float>, Double> opSetToSupport = new HashMap<Set<Float>, Double>();
 		for(Set<Float> setAsKey:ipSetToSupport.keySet()){
 			Double supVal = ipSetToSupport.get(setAsKey);

@@ -21,46 +21,11 @@ import Exceptions.InputReaderAndEncoderException;
  */
 public class Main {
 
-	//	Map<Set<Float>,Integer> mSetToCount = new HashMap<Set<Float>,Integer>(); 
-	//	public Map<Set<Float>,Integer> getSubSets(){
-	//		return mSetToCount;
-	//	}
-	//    public void getSubsets(List<Float> superSetList, int subSetSize)
-	//    {
-	//        int size = superSetList.size();
-	//        for(int i = 0; i < (1<<size); i++)
-	//        {
-	//        	Set<Float> oneSet = new HashSet<Float>();
-	//            for (int j = 0; j < size; j++){
-	//                if ((i & (1 << j)) > 0){
-	//                	oneSet.add(superSetList.get(j));
-	//                }
-	//            }
-	//            if(oneSet.size() == subSetSize){
-	//            	mSetToCount.put(oneSet, 0);
-	//            }
-	//        }
-	//    }
-
 
 	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
-		//		Main mainObj = new Main();
-		//		
-		//		List<Float> superSetList= new ArrayList<Float>();
-		//		superSetList.add((float) 1);
-		//		superSetList.add((float) 2);
-		//		superSetList.add((float) 3);
-		//		superSetList.add((float) 4);
-		//		
-		//		mainObj.getSubsets(superSetList,superSetList.size()-1);
-		//		Map<Set<Float>,Integer> subsets = mainObj.getSubSets(); 
-		//		System.out.println("Printing Keys..\n");
-		//		for(Set<Float> key:subsets.keySet()){
-		//			System.out.println(key);
-		//		}
 
 
-		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
+		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data3";
 
 		/*
 		 * Step 1: Load the data and encode it for Aprioi algorithm
@@ -75,7 +40,7 @@ public class Main {
 		 * Step 2: Get the 1-ItemSet and its support value
 		 */
 		ItemSetBuilder itemSetBuilder = new ItemSetBuilder(colHeaderIdxToColsEncodingVals,encodedTransactions,
-				(float)0.2, 0);
+				(float)0.3, 0);
 		itemSetBuilder.initializeItemSets();
 
 		itemSetBuilder.printItemSetAndSupport(itemSetBuilder.getOneCandidateItemsSet());
@@ -110,21 +75,26 @@ public class Main {
 		}
 		
 		
-		HashMap<Set<Float>, Double> prunedTwoItemSetMap = itemSetBuilder.getPrunedItemset(twoItemSetMap);
+		HashMap<Set<Float>, Double> frequentTwoItemSetMap = itemSetBuilder.getKFrequentItemsSet(twoItemSetMap);
 		System.out.println("\n\nPruned Two Items Set");
-		for(Set<Float> setKey:prunedTwoItemSetMap.keySet()){
-			System.out.println(setKey+"-->"+prunedTwoItemSetMap.get(setKey));
+		for(Set<Float> setKey:frequentTwoItemSetMap.keySet()){
+			System.out.println(setKey+"-->"+frequentTwoItemSetMap.get(setKey));
 		}
 		
+				
+		System.out.println("\n\n\n---------------------------\n\n");
+		HashMap<Set<Float>, Double> frequentKItemSet = frequentTwoItemSetMap;
+		while(frequentKItemSet.size()!=0){
+			HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(frequentKItemSet);	
+			System.out.println("\n\nCandidate Set");
+			itemSetBuilder.printItemSetAndSupport(candidateSet);
+			frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(candidateSet);
+			System.out.println("\nFrequent Set");
+			itemSetBuilder.printItemSetAndSupport(frequentKItemSet);
+			
+		}
 		
-
-		HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(prunedTwoItemSetMap);
-		System.out.println("\n\nK+1 Set");
-		itemSetBuilder.printItemSetAndSupport(candidateSet);
 	}
-
-
-
 
 }
 
