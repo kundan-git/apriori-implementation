@@ -90,7 +90,7 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	private List<Set<Float>> getAllSubsets(List<Float> superSetList, int subSetSize){
 		Map<Set<Float>,Integer> keyToVal = new HashMap<Set<Float>,Integer>();  
 		int size = superSetList.size();
-        for(int i = 0; i < (1<<size); i++)
+        for(int i=0;i<(1<<size); i++)
         {
         	Set<Float> oneSet = new HashSet<Float>();
             for (int j = 0; j < size; j++){
