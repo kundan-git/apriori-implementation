@@ -61,12 +61,12 @@ public class RuleBuilder {
 	public void printGeneratedRules(){
 		for(int idx=0;idx<mAllRules.size();idx++){
 			Rule aRule = mAllRules.get(idx);
-			System.out.println("\nRule#"+idx+": "+"(Support="+roundToTwoDecimalPlaces(aRule.getSupportVal())+
+			System.out.println("\nRule#"+(idx+1)+": "+"(Support="+roundToTwoDecimalPlaces(aRule.getSupportVal())+
 					" Confidence="+roundToTwoDecimalPlaces(aRule.getConfidenceVal()));
 			
-			System.out.println("{ "+decodeSet(aRule.getCausationSet())+" }");
+			System.out.println("{"+decodeSet(aRule.getCausationSet())+" }");
 			
-			System.out.println("----> { "+decodeSet(aRule.getEffectSet())+" } ");
+			System.out.println("----> {"+decodeSet(aRule.getEffectSet())+" } ");
 			
 		}
 	}

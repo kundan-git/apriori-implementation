@@ -56,12 +56,6 @@ public class Main {
 			ruleBuilder.addFrequentItemSet(frequentKItemSet);
 			HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(frequentKItemSet);	
 			frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(candidateSet);
-			
-//			System.out.println("\n\nCandidate Set");
-//			itemSetBuilder.printItemSetAndSupport(candidateSet);
-//			System.out.println("\nFrequent Set");
-//			itemSetBuilder.printItemSetAndSupport(frequentKItemSet);
-
 		}
 
 		ruleBuilder.generateRules();
