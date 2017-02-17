@@ -2,11 +2,11 @@ package RulesBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import sun.util.resources.cldr.sah.CalendarData_sah_RU;
 
 /**
  * @author kundan kumar
@@ -22,9 +22,9 @@ public class RuleBuilder {
 		mHeaderIdxToDistEncodedVals = headerIdxToDistEncodedVals;
 		mEncodedTransactions= encodedTransactions;
 		mMinConfidence=minConfidence;
-		allFrequentItemSets = new ArrayList<HashMap<Set<Float>, Double>>();
 		mTotalTxns = mEncodedTransactions.size();
-		mAllRules = new ArrayList<Rule>(); 
+		mAllRules = new ArrayList<Rule>();
+		mAllFreqSetToSupport = new HashMap<Set<Float>, Double>();
 	}
 
 	public void addFrequentItemSet(HashMap<Set<Float>, Double> frequentItemSet){
@@ -37,7 +37,13 @@ public class RuleBuilder {
 			break;
 		}
 
-		allFrequentItemSets.add(setLength,frequentItemSet);
+		if(setLength > mMaxSizeOfFreqSet){
+			mMaxSizeOfFreqSet = setLength;
+		}
+		
+		for(Set<Float> aKey: frequentItemSet.keySet()){
+			mAllFreqSetToSupport.put(aKey,frequentItemSet.get(aKey));
+		}
 	}
 
 
@@ -47,20 +53,18 @@ public class RuleBuilder {
 	
 	
 	public void generateRules(){
-		System.out.println("Count of freqtent sets:"+allFrequentItemSets.size());
-
-		if(allFrequentItemSets.size() < 2){
-			//TODO: Check what to return
-			return;
-		}
-
-		for(int idx=0;idx<allFrequentItemSets.size();idx++){
-			HashMap<Set<Float>, Double> allFreqSets = allFrequentItemSets.get(idx);
-
-			for(Set<Float> oneFreqSet: allFreqSets.keySet()){
-
+		
+		Set<Set<Float>> allFreqSets = mAllFreqSetToSupport.keySet();
+		for(int idx=2;idx<(mMaxSizeOfFreqSet+1);idx++){
+			for(Set<Float> oneFreqSet: allFreqSets){
+				
+				if(oneFreqSet.size() != idx){
+					continue;
+				}
+				
+				//System.out.println("Processing: "+oneFreqSet);
 				int k = oneFreqSet.size();
-				double supportCount =  allFreqSets.get(oneFreqSet);
+				double supportCount =  mAllFreqSetToSupport.get(oneFreqSet);
 				List<Set<Float>> belowConfSets = new ArrayList<Set<Float>>();
 				while(k>1){
 					k = k-1;
@@ -69,7 +73,6 @@ public class RuleBuilder {
 						/* Get the causation and effect sets*/
 						Set<Float> causationSet = kMinus1Sets.get(cnt); 
 						Set<Float> effectSet = getEffectSet(oneFreqSet,causationSet);
-
 						/* Step 1: P.R.U.N.I.N.G
 						 * Check if the causation is a subset of any set
 						 * in the below minimum confidence threshold list 
@@ -82,7 +85,7 @@ public class RuleBuilder {
 
 						/* Step 2: Get the confidence of the causation, effect pair*/
 						float confidence = getConfidenceValue(causationSet,supportCount);
-
+						
 						/* If below confidence threshold add to below threshold 
 						 * list else create a Rule Object.*/
 						if(confidence < mMinConfidence){
@@ -96,6 +99,16 @@ public class RuleBuilder {
 			}
 		}
 	}
+	
+	
+	/**
+	 * Gets the all rules.
+	 *
+	 * @return the all rules
+	 */
+	public List<Rule> getAllRules() {
+		return mAllRules;
+	}
 
 	private boolean isCausationSetSubsetOfDiscardedSets(Set<Float> causationSet,
 			List<Set<Float>> setsBelowMinConfidence) {
@@ -106,38 +119,73 @@ public class RuleBuilder {
 				break;
 			}
 		}
-		return false;
+		return ret;
 	}
 
 
 	private Set<Float> getEffectSet(Set<Float> oneFreqSet, Set<Float> causationSet) {
-		oneFreqSet.removeAll(causationSet);
+		Set<Float> newOneFreqSet = new HashSet<Float>(oneFreqSet);
+		newOneFreqSet.removeAll(causationSet);
 		return oneFreqSet;
 	}
 
 	private float getConfidenceValue(Set<Float> causation, double supportCount){
-		//TODO
-		float conf = (float)0;
+		double causeSupportVal = mAllFreqSetToSupport.get(causation);
+		float conf = (float)(supportCount/causeSupportVal);
 		return conf;
 	} 
 
 
+	
+	
+	
+	/**
+	 * Subset generator.
+	 *
+	 * @param superSetList the super set list
+	 * @param subSetSize the sub set size
+	 */
+	private void subsetGenerator(List<Float> superSetList, int subSetSize){
+		if(superSetList.size() == subSetSize){
+			mSubsetsMap.put(new HashSet<Float>(superSetList), 0);	
+		}
+		for(int idx=0; idx<superSetList.size();idx++){
+			List<Float> newSuperSetList = new ArrayList<Float>(superSetList);
+			newSuperSetList.remove(idx);
+			if(!newSuperSetList.isEmpty()){
+				subsetGenerator(newSuperSetList, subSetSize);
+			}
+		}
+	}
+	
+	/**
+	 * Generate all subsets.
+	 *
+	 * @param oneFreqSet the one freq set
+	 * @param subSetSize the sub set size
+	 * @return the list
+	 */
 	private List<Set<Float>> generateAllSubsets(Set<Float> oneFreqSet, int subSetSize){
-		// TODO
-		List<Set<Float>> setPermutations = new ArrayList<Set<Float>>();
+		subsetGenerator(new ArrayList<>(oneFreqSet), subSetSize);
+		List<Set<Float>>  setPermutations = new ArrayList<Set<Float>>(mSubsetsMap.keySet());
+		mSubsetsMap.clear();
 		return setPermutations;
 	}
 
 	private float mMinConfidence;
 	private List<Rule> mAllRules= null;
+	
+	private int mMaxSizeOfFreqSet = 0;
 	private Map<Integer,String> mIdxToColName;
 	private Map<Float,String> mEncodedColsToName;
 	private List<Set<Float>> mEncodedTransactions;
 	private Map<Integer,List<Float>> mHeaderIdxToDistEncodedVals;
 	private double mTotalTxns;
-
+	private HashMap<Set<Float>, Integer> mSubsetsMap = new HashMap<Set<Float>, Integer>();
+	
 	/* Stores frequent sets, ordered by size of the set */
-	private List<HashMap<Set<Float>, Double>> allFrequentItemSets = null;
+	private HashMap<Set<Float>, Double> mAllFreqSetToSupport = null;
+	
 	private Map<Set<Float>,Set<Float>> mCauseToEffectSet = new HashMap<Set<Float>,Set<Float>>();
 
 

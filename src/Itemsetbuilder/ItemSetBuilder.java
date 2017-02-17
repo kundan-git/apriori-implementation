@@ -12,17 +12,17 @@ import Interfaces.ItemSetGenerator;
 
 public class ItemSetBuilder implements ItemSetGenerator{
 
+	private float mTxnsCount;
 	private float mMinSup;
 	private List<Set<Float>> mEncodedTransactions=null;
-	private HashMap<Integer,List<Float>> mColHeaderIdxToColsEncodingVals= null;
 	private HashMap<Set<Float>, Double> mOneItemSetToSup =null;
 	private HashMap<Set<Float>, Double> mOneItemPrunedSetToSup =null;
-	private float mTxnsCount;
-
+	private HashMap<Integer,List<Float>> mColHeaderIdxToColsEncodingVals= null;
+	private HashMap<Set<Float>, Integer> subsetsMap = new HashMap<Set<Float>, Integer>();
 
 
 	public ItemSetBuilder(HashMap<Integer,List<Float>> colHeaderIdxToColsEncodingVals,
-			List<Set<Float>> encodedTransactions, float minSup,float minConf){
+			List<Set<Float>> encodedTransactions, float minSup){
 		mColHeaderIdxToColsEncodingVals = colHeaderIdxToColsEncodingVals;
 		mEncodedTransactions = encodedTransactions;
 		mMinSup = minSup;
@@ -87,24 +87,39 @@ public class ItemSetBuilder implements ItemSetGenerator{
 		return kPlusOneSet;
 	}
 	
+	/**
+	 * Gets the all subsets.
+	 *
+	 * @param superSetList the super set list
+	 * @param subSetSize the sub set size
+	 * @return the all subsets
+	 */
 	private List<Set<Float>> getAllSubsets(List<Float> superSetList, int subSetSize){
-		Map<Set<Float>,Integer> keyToVal = new HashMap<Set<Float>,Integer>();  
-		int size = superSetList.size();
-        for(int i=0;i<(1<<size); i++)
-        {
-        	Set<Float> oneSet = new HashSet<Float>();
-            for (int j = 0; j < size; j++){
-                if ((i & (1 << j)) > 0){
-                	oneSet.add(superSetList.get(j));
-                }
-            }
-            if(oneSet.size() == subSetSize){
-            	keyToVal.put(oneSet, 0);
-            }
-        }
-		return new ArrayList<Set<Float>>(keyToVal.keySet());
+		subsetGenerator(superSetList, subSetSize);
+		List<Set<Float>>  ret = new ArrayList<Set<Float>>(subsetsMap.keySet());
+		subsetsMap.clear();
+		return ret;
 	}
 	
+	
+	/**
+	 * Subset generator.
+	 *
+	 * @param superSetList the super set list
+	 * @param subSetSize the sub set size
+	 */
+	private void subsetGenerator(List<Float> superSetList, int subSetSize){
+		if(superSetList.size() == subSetSize){
+			subsetsMap.put(new TreeSet<Float>(superSetList), 0);	
+		}
+		for(int idx=0; idx<superSetList.size();idx++){
+			List<Float> newSuperSetList = new ArrayList<Float>(superSetList);
+			newSuperSetList.remove(idx);
+			if(!newSuperSetList.isEmpty()){
+				subsetGenerator(newSuperSetList, subSetSize);
+			}
+		}
+	}
 	
 	@Override
 	public HashMap<Set<Float>, Double> getKCandidateItemsSet(HashMap<Set<Float>, Double> ipSetMap) {

@@ -4,6 +4,7 @@ package Core;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.TreeSet;
 import Inputreader.InputDataDelimiters;
 import Inputreader.InputReaderEncoder;
 import Itemsetbuilder.ItemSetBuilder;
+import RulesBuilder.Rule;
 import RulesBuilder.RuleBuilder;
 import Exceptions.InputReaderAndEncoderException;
 
@@ -22,9 +24,8 @@ import Exceptions.InputReaderAndEncoderException;
  */
 public class Main {
 
-
 	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
-
+		
 		HashMap<Set<Float>, Double> allFrequentItemSetToSupport = new HashMap<Set<Float>, Double>();  
 		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
 
@@ -38,22 +39,26 @@ public class Main {
 		Map<Float,String> encodedColsToName= data.getEncodeColsToName();
 		data.printHeadersAndUniqueColVals();
 
-		
+
 		/*
 		 * Step 2: Get the 1-ItemSet and its support value
 		 */
 		ItemSetBuilder itemSetBuilder = 
-				new ItemSetBuilder(colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0.2, 0);
-		
+				new ItemSetBuilder(colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0.2);
+
 		RuleBuilder ruleBuilder =
 				new RuleBuilder(headerIdxToName,encodedColsToName,
-						colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0.2);
-		
+						colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0);
+
 		itemSetBuilder.initializeItemSets();
 		HashMap<Set<Float>, Double> oneItemFrequentSet = itemSetBuilder.getOneFrequentItemsSet();
-		HashMap<Set<Float>, Double> twoItemCandidateSet = itemSetBuilder.getTwoItemsCandidateSet(oneItemFrequentSet);
-		HashMap<Set<Float>, Double> frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(twoItemCandidateSet);
 		
+		ruleBuilder.addFrequentItemSet(oneItemFrequentSet);
+		HashMap<Set<Float>, Double> twoItemCandidateSet = itemSetBuilder.getTwoItemsCandidateSet(oneItemFrequentSet);
+
+
+		HashMap<Set<Float>, Double> frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(twoItemCandidateSet);
+
 		itemSetBuilder.printItemSetAndSupport(frequentKItemSet);
 		while(frequentKItemSet.size()!=0){
 			ruleBuilder.addFrequentItemSet(frequentKItemSet);
@@ -63,13 +68,15 @@ public class Main {
 			itemSetBuilder.printItemSetAndSupport(candidateSet);
 			System.out.println("\nFrequent Set");
 			itemSetBuilder.printItemSetAndSupport(frequentKItemSet);
-			
+
 		}
-		
+
 		ruleBuilder.generateRules();
-		
-		
-		
+		List<Rule>  allRules= ruleBuilder.getAllRules();
+		System.out.println("Found "+allRules.size()+" rules\n");
+
+
+
 	}
 
 }
