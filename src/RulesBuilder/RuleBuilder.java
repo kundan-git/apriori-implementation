@@ -46,23 +46,40 @@ public class RuleBuilder {
 		}
 	}
 
+	private String decodeSet(Set<Float> ipSet){
+		String decodedString= "";
+		List<Float> asList = new ArrayList<>(ipSet);
+		for(int idx=0;idx<asList.size();idx++){
+			decodedString=decodedString+"  "+mIdxToColName.get(asList.get(idx).intValue())+
+					"="+mEncodedColsToName.get(asList.get(idx));
+		}
+		
+		return decodedString;
+	}
 
-	private void generateRulesForFrequentItemSet(HashMap<Set<Float>, Double> freqSetToSupport){
-		// TODO
+	
+	public void printGeneratedRules(){
+		for(int idx=0;idx<mAllRules.size();idx++){
+			Rule aRule = mAllRules.get(idx);
+			System.out.println("\nRule#"+idx+": "+"(Support="+roundToTwoDecimalPlaces(aRule.getSupportVal())+
+					" Confidence="+roundToTwoDecimalPlaces(aRule.getConfidenceVal()));
+			
+			System.out.println("{ "+decodeSet(aRule.getCausationSet())+" }");
+			
+			System.out.println("----> { "+decodeSet(aRule.getEffectSet())+" } ");
+			
+		}
 	}
 	
 	
 	public void generateRules(){
-		
 		Set<Set<Float>> allFreqSets = mAllFreqSetToSupport.keySet();
 		for(int idx=2;idx<(mMaxSizeOfFreqSet+1);idx++){
 			for(Set<Float> oneFreqSet: allFreqSets){
-				
 				if(oneFreqSet.size() != idx){
 					continue;
 				}
 				
-				//System.out.println("Processing: "+oneFreqSet);
 				int k = oneFreqSet.size();
 				double supportCount =  mAllFreqSetToSupport.get(oneFreqSet);
 				List<Set<Float>> belowConfSets = new ArrayList<Set<Float>>();
@@ -79,6 +96,7 @@ public class RuleBuilder {
 						 * sets. If yes, continue as its confidence would 
 						 * be again lesser than confidence threshold.  
 						 * */
+						
 						if(isCausationSetSubsetOfDiscardedSets(causationSet,belowConfSets)){
 							continue;
 						}
@@ -86,12 +104,16 @@ public class RuleBuilder {
 						/* Step 2: Get the confidence of the causation, effect pair*/
 						float confidence = getConfidenceValue(causationSet,supportCount);
 						
+//						System.out.println("causationSet:"+causationSet+" belowConfSets:"+
+//						belowConfSets+" confidence:"+confidence+" mMinConfidence:"+mMinConfidence);
+						
 						/* If below confidence threshold add to below threshold 
 						 * list else create a Rule Object.*/
 						if(confidence < mMinConfidence){
 							belowConfSets.add(causationSet);
 						}else{
-							Rule newRule = new Rule((float)(supportCount/mTotalTxns), confidence, causationSet, effectSet);
+							Rule newRule = 
+									new Rule((float)(supportCount/mTotalTxns), confidence, causationSet, effectSet);
 							mAllRules.add(newRule);
 						}
 					}
@@ -114,7 +136,9 @@ public class RuleBuilder {
 			List<Set<Float>> setsBelowMinConfidence) {
 		boolean ret = false;
 		for(int idx=0;idx<setsBelowMinConfidence.size();idx++){
-			if(setsBelowMinConfidence.get(idx).contains(causationSet)){
+			Set<Float> belowMinConfSet = new HashSet<Float>(setsBelowMinConfidence.get(idx));
+			belowMinConfSet.retainAll(causationSet);
+			if(belowMinConfSet.size() == causationSet.size()){
 				ret=true;
 				break;
 			}
@@ -123,10 +147,15 @@ public class RuleBuilder {
 	}
 
 
+	private String roundToTwoDecimalPlaces(float val)
+	{
+	    return String.format("%.2f", val);
+	}
+	
 	private Set<Float> getEffectSet(Set<Float> oneFreqSet, Set<Float> causationSet) {
 		Set<Float> newOneFreqSet = new HashSet<Float>(oneFreqSet);
 		newOneFreqSet.removeAll(causationSet);
-		return oneFreqSet;
+		return newOneFreqSet;
 	}
 
 	private float getConfidenceValue(Set<Float> causation, double supportCount){
