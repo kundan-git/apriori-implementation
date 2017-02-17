@@ -175,6 +175,15 @@ public class InputReaderEncoder implements InputDataFormatter{
 		return mEncodeHeaderToName;
 	}
 	
+	/**
+	 * Gets the input file path.
+	 *
+	 * @return the file path
+	 */
+	public String getFilepath() {
+		return mFilepath;
+	}
+	
 	/*
 	 * Private Member Variables
 	 */
@@ -342,8 +351,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 					/* If first line and file has header*/
 					mHeaders = line.split(delim);
 					if(mHeaders.length ==1){
-						throw new InputReaderAndEncoderException("Insufficient columns! "
-								+ "Check if correct delimiter is specified."); 
+						throw new InputReaderAndEncoderException(InputReaderAndEncoderException.INVALID_COLUMN_LENGTH); 
 					}
 
 				} else if((colCount==0) && !mHasHeader){

@@ -1,17 +1,13 @@
 package Core;
-
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 import Inputreader.InputDataDelimiters;
 import Inputreader.InputReaderEncoder;
 import Itemsetbuilder.ItemSetBuilder;
-import RulesBuilder.Rule;
 import RulesBuilder.RuleBuilder;
 import Exceptions.InputReaderAndEncoderException;
 
@@ -20,48 +16,106 @@ import Exceptions.InputReaderAndEncoderException;
  */
 public class Main {
 
-	public static void main(String[] argv) throws FileNotFoundException, IOException, InputReaderAndEncoderException{
-		
-		String filepath="C:\\Users\\6910P\\Google Drive\\Dalhousie\\term_1\\data_mining\\assignment_3\\Ass3-Demo\\data1";
+	private void RunApriori(String inputFilePath,InputDataDelimiters delimiter, boolean hasHeader, 
+			float minSup,float minConf,String resultFilePath) 
+					throws FileNotFoundException, IOException, InputReaderAndEncoderException{
 
-		/*
-		 * Step 1: Load the data and encode it for Apriori algorithm
-		 */
-		InputReaderEncoder data= new InputReaderEncoder(filepath,InputDataDelimiters.SPACE,true);
-		HashMap<Integer,List<Float>> colHeaderIdxToDistEncodedVals = data.getColHeaderIdxToEncodedDistinctVals();
-		List<Set<Float>> encodedTransactions = data.getEncodedTransactions();
-		Map<Integer,String> headerIdxToName= data.getEncodeHeaderToName();
-		Map<Float,String> encodedColsToName= data.getEncodeColsToName();
-		data.printHeadersAndUniqueColVals();
+		final long startTime = System.currentTimeMillis();
 
+		/* Step 1: Load the data and encode it.*/
+		InputReaderEncoder encodedDataObj= new InputReaderEncoder(inputFilePath,delimiter,true);
 
-		/*
-		 * Step 2: Get the 1-ItemSet and its support value
-		 */
-		ItemSetBuilder itemSetBuilder = 
-				new ItemSetBuilder(colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0.2);
+		/* Step 2: Initialize Item-set Builder. */
+		ItemSetBuilder itemSetBuilder = new ItemSetBuilder(encodedDataObj,minSup);
 
-		RuleBuilder ruleBuilder =
-				new RuleBuilder(headerIdxToName,encodedColsToName,
-						colHeaderIdxToDistEncodedVals,encodedTransactions,(float)0.2);
+		/* Step 3: Initialize Rule Builder*/
+		RuleBuilder ruleBuilder=new RuleBuilder(encodedDataObj,minConf);
 
-		itemSetBuilder.initializeItemSets();
-		HashMap<Set<Float>, Double> oneItemFrequentSet = itemSetBuilder.getOneFrequentItemsSet();
-		
-		ruleBuilder.addFrequentItemSet(oneItemFrequentSet);
-		HashMap<Set<Float>, Double> twoItemCandidateSet = itemSetBuilder.getTwoItemsCandidateSet(oneItemFrequentSet);
-		HashMap<Set<Float>, Double> frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(twoItemCandidateSet);
+		/* Step 4: Generate candidate-set and frequent-item-sets. Add each frequent item-set to Rule builder*/
+		/* Step 4.1: Create frequent 1-items set*/
+		HashMap<Set<Float>, Double> frequentOneItemSet = itemSetBuilder.getFrequentOneItemsSet();
+		ruleBuilder.addFrequentItemSet(frequentOneItemSet);
 
+		/* Step 4.2: Create frequent 2-items set.*/
+		HashMap<Set<Float>, Double> twoItemCandidateSet = itemSetBuilder.getTwoItemsCandidateSet(frequentOneItemSet);
+		HashMap<Set<Float>, Double> frequentKItemSet = itemSetBuilder.getFrequentKItemsSet(twoItemCandidateSet);
+
+		/* Step 4.3: Generate candidate,frequent k-items sets until we get empty frequent set.*/
 		while(frequentKItemSet.size()!=0){
 			ruleBuilder.addFrequentItemSet(frequentKItemSet);
-			HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(frequentKItemSet);	
-			frequentKItemSet = itemSetBuilder.getKFrequentItemsSet(candidateSet);
+
+			/* N.O.T.E: Candidate set pruning is done internally by getKCandidateItemsSet() method.*/
+			HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(frequentKItemSet);
+			frequentKItemSet = itemSetBuilder.getFrequentKItemsSet(candidateSet);
 		}
 
+		/* Step 5: Generate all rules.*/
 		ruleBuilder.generateRules();
-		List<Rule>  allRules= ruleBuilder.getAllRules();
-		System.out.println("Found "+allRules.size()+" rules\n");
-		ruleBuilder.printGeneratedRules();
+
+		final long endTime = System.currentTimeMillis();
+		ruleBuilder.writeRulesAndSummaryToFile(resultFilePath,minSup,(endTime-startTime));
+
+	}
+
+	public static void main(String[] argv) {
+
+		String outFilePath = "./Rules.txt";
+		float minSup = 0;
+		float minConf =0;
+
+		Scanner reader = new Scanner(System.in);
+
+		/* Read input file path.*/
+		System.out.println("Enter the filepath: ");
+		String filepath = reader.nextLine(); 
+
+
+		/* Read minimum support Value.*/
+		try{
+			System.out.println("Please select the minimum support rate(0.00-1.00):");
+			minSup = reader.nextFloat();	
+			if((minSup>1) || (minSup<0)){
+				System.out.println("ERROR >> Invalid value for support rate! Please retry.");
+				reader.close();
+				return;
+			}
+		}catch(Exception e){
+			System.out.println("ERROR >> Invalid value for support rate! Please retry.");
+			reader.close();
+			return;
+		}
+
+		/* Read minimum confidence Value.*/
+		try{
+			System.out.println("Please select the minimum confidence rate(0.00-1.00):");;
+			minConf = reader.nextFloat();	
+			if((minConf>1) || (minConf<0)){
+				System.out.println("ERROR >> Invalid value for confidence! Please retry.");
+				reader.close();
+				return;
+			}
+		}catch(Exception e){
+			System.out.println("ERROR >> Invalid value for confidence! Please retry.");
+			reader.close();
+			return;
+		}
+
+		reader.close();
+
+		Main mainObj= new Main();
+		try {
+			mainObj.RunApriori(filepath,InputDataDelimiters.SPACE,true,minSup,minConf,outFilePath);
+		} catch (IOException e) {
+			System.out.println("ERROR >> Unable to read/write file.\nCheck input file path is correct "
+					+ "and you have suffient read/write permission.");
+			return;
+		}catch( InputReaderAndEncoderException ireE){
+			System.out.println("ERROR >> "+ireE.getMessage());
+			return;
+		}
+		System.out.println("The result is in the "+outFilePath+" file.");
+		System.out.println("\n*** Algorithm Finished ***");
+
 
 	}
 

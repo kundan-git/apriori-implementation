@@ -1,5 +1,9 @@
 package RulesBuilder;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,20 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import Inputreader.InputReaderEncoder;
+
 
 /**
  * @author kundan kumar
  *
  */
 public class RuleBuilder {
-	public RuleBuilder(Map<Integer,String> idxToColName,
-			Map<Float,String> encodedColsToName,
-			Map<Integer,List<Float>> headerIdxToDistEncodedVals,
-			List<Set<Float>> encodedTransactions, float minConfidence){
-		mIdxToColName = idxToColName;
-		mEncodedColsToName = encodedColsToName;
-		mHeaderIdxToDistEncodedVals = headerIdxToDistEncodedVals;
-		mEncodedTransactions= encodedTransactions;
+
+	public RuleBuilder(InputReaderEncoder encodedDataObj, float minConfidence){
+		mIdxToColName = encodedDataObj.getEncodeHeaderToName();
+		mEncodedColsToName = encodedDataObj.getEncodeColsToName();
+		mEncodedTransactions= encodedDataObj.getEncodedTransactions();
+		mInputFilePath = encodedDataObj.getFilepath();
 		mMinConfidence=minConfidence;
 		mTotalTxns = mEncodedTransactions.size();
 		mAllRules = new ArrayList<Rule>();
@@ -40,7 +44,7 @@ public class RuleBuilder {
 		if(setLength > mMaxSizeOfFreqSet){
 			mMaxSizeOfFreqSet = setLength;
 		}
-		
+
 		for(Set<Float> aKey: frequentItemSet.keySet()){
 			mAllFreqSetToSupport.put(aKey,frequentItemSet.get(aKey));
 		}
@@ -53,25 +57,60 @@ public class RuleBuilder {
 			decodedString=decodedString+"  "+mIdxToColName.get(asList.get(idx).intValue())+
 					"="+mEncodedColsToName.get(asList.get(idx));
 		}
-		
+
 		return decodedString;
 	}
 
-	
-	public void printGeneratedRules(){
+
+	public void printGeneratedRules(float minSup,long executionTime){
+		System.out.println(getRulesAndSummary(minSup,executionTime));
+	}
+
+	private String getRulesAndSummary(float minSup,long executionTime){
+		String rulesAndSummary = "";
+
+		/* Generate summary as String*/
+		rulesAndSummary="************************************************************\n";
+		rulesAndSummary=rulesAndSummary+"Association Rules Mining Using Apriori Algorithm\n";
+		rulesAndSummary=rulesAndSummary+"************************************************************\n";
+		rulesAndSummary=rulesAndSummary+"\nSummary:\n";
+		rulesAndSummary=rulesAndSummary+"\tInput File:\t\t"+mInputFilePath+"\n";
+		rulesAndSummary=rulesAndSummary+"\tMeasures:  \t\t"+"Support:"+minSup+"\n";
+		rulesAndSummary=rulesAndSummary+"\t           \t\t"+"Confidence:"+mMinConfidence+"\n";
+		rulesAndSummary=rulesAndSummary+"\tTotal Rows in input:    "+(int)mTotalTxns+"\n";
+		rulesAndSummary=rulesAndSummary+"\tTotal Rules discovered: "+mAllRules.size()+"\n";
+		rulesAndSummary=rulesAndSummary+"\tProgram Execution Time: "+executionTime+" msec\n";
+		rulesAndSummary=rulesAndSummary+"\n************************************************************\n\n";
+		rulesAndSummary=rulesAndSummary+"Rules:\n";
+
+
+
+		/* Generate rules as String*/
 		for(int idx=0;idx<mAllRules.size();idx++){
 			Rule aRule = mAllRules.get(idx);
-			System.out.println("\nRule#"+(idx+1)+": "+"(Support="+roundToTwoDecimalPlaces(aRule.getSupportVal())+
-					" Confidence="+roundToTwoDecimalPlaces(aRule.getConfidenceVal()));
-			
-			System.out.println("{"+decodeSet(aRule.getCausationSet())+" }");
-			
-			System.out.println("----> {"+decodeSet(aRule.getEffectSet())+" } ");
-			
+			rulesAndSummary = rulesAndSummary+"\nRule#"+(idx+1)+": "+
+					"(Support="+roundToTwoDecimalPlaces(aRule.getSupportVal())+
+					" Confidence="+roundToTwoDecimalPlaces(aRule.getConfidenceVal())+")";
+			rulesAndSummary = rulesAndSummary+"\n{"+decodeSet(aRule.getCausationSet())+" }";
+			rulesAndSummary = rulesAndSummary+"\n\t----> {"+decodeSet(aRule.getEffectSet())+" }\n";
+
+		}	
+		return rulesAndSummary;
+	}
+
+	public void writeRulesAndSummaryToFile(String resultFilepath,float minSup,long executionTime){
+		String result = getRulesAndSummary(minSup,executionTime);
+		File file = new File(resultFilepath);
+		BufferedWriter bufWriter = null;
+		try {
+			bufWriter = new BufferedWriter(new FileWriter(file));
+			bufWriter.write(result);
+			bufWriter.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 	}
-	
-	
+
 	public void generateRules(){
 		Set<Set<Float>> allFreqSets = mAllFreqSetToSupport.keySet();
 		for(int idx=2;idx<(mMaxSizeOfFreqSet+1);idx++){
@@ -79,7 +118,7 @@ public class RuleBuilder {
 				if(oneFreqSet.size() != idx){
 					continue;
 				}
-				
+
 				int k = oneFreqSet.size();
 				double supportCount =  mAllFreqSetToSupport.get(oneFreqSet);
 				List<Set<Float>> belowConfSets = new ArrayList<Set<Float>>();
@@ -96,17 +135,14 @@ public class RuleBuilder {
 						 * sets. If yes, continue as its confidence would 
 						 * be again lesser than confidence threshold.  
 						 * */
-						
+
 						if(isCausationSetSubsetOfDiscardedSets(causationSet,belowConfSets)){
 							continue;
 						}
 
 						/* Step 2: Get the confidence of the causation, effect pair*/
 						float confidence = getConfidenceValue(causationSet,supportCount);
-						
-//						System.out.println("causationSet:"+causationSet+" belowConfSets:"+
-//						belowConfSets+" confidence:"+confidence+" mMinConfidence:"+mMinConfidence);
-						
+
 						/* If below confidence threshold add to below threshold 
 						 * list else create a Rule Object.*/
 						if(confidence < mMinConfidence){
@@ -121,8 +157,8 @@ public class RuleBuilder {
 			}
 		}
 	}
-	
-	
+
+
 	/**
 	 * Gets the all rules.
 	 *
@@ -149,9 +185,9 @@ public class RuleBuilder {
 
 	private String roundToTwoDecimalPlaces(float val)
 	{
-	    return String.format("%.2f", val);
+		return String.format("%.2f", val);
 	}
-	
+
 	private Set<Float> getEffectSet(Set<Float> oneFreqSet, Set<Float> causationSet) {
 		Set<Float> newOneFreqSet = new HashSet<Float>(oneFreqSet);
 		newOneFreqSet.removeAll(causationSet);
@@ -165,9 +201,9 @@ public class RuleBuilder {
 	} 
 
 
-	
-	
-	
+
+
+
 	/**
 	 * Subset generator.
 	 *
@@ -186,7 +222,7 @@ public class RuleBuilder {
 			}
 		}
 	}
-	
+
 	/**
 	 * Generate all subsets.
 	 *
@@ -201,23 +237,18 @@ public class RuleBuilder {
 		return setPermutations;
 	}
 
+	private double mTotalTxns;
 	private float mMinConfidence;
-	private List<Rule> mAllRules= null;
-	
 	private int mMaxSizeOfFreqSet = 0;
+	private List<Rule> mAllRules= null;
+	private String mInputFilePath=null;
 	private Map<Integer,String> mIdxToColName;
 	private Map<Float,String> mEncodedColsToName;
 	private List<Set<Float>> mEncodedTransactions;
-	private Map<Integer,List<Float>> mHeaderIdxToDistEncodedVals;
-	private double mTotalTxns;
 	private HashMap<Set<Float>, Integer> mSubsetsMap = new HashMap<Set<Float>, Integer>();
-	
+
+
 	/* Stores frequent sets, ordered by size of the set */
 	private HashMap<Set<Float>, Double> mAllFreqSetToSupport = null;
-	
-	private Map<Set<Float>,Set<Float>> mCauseToEffectSet = new HashMap<Set<Float>,Set<Float>>();
-
-
-
 
 }

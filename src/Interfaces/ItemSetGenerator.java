@@ -19,7 +19,7 @@ public interface ItemSetGenerator {
 	 *
 	 * @return the one frequent items set
 	 */
-	public HashMap<Set<Float>,Double> getOneFrequentItemsSet();
+	public HashMap<Set<Float>,Double> getFrequentOneItemsSet();
 	
 	/**
 	 * Gets the two items candidate set.
@@ -40,6 +40,6 @@ public interface ItemSetGenerator {
 	 *
 	 * @return the k frequent items set
 	 */
-	public HashMap<Set<Float>,Double> getKFrequentItemsSet(HashMap<Set<Float>, Double> kCandidateSet);
+	public HashMap<Set<Float>,Double> getFrequentKItemsSet(HashMap<Set<Float>, Double> kCandidateSet);
 	
 }

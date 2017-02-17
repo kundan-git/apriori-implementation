@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import Inputreader.InputReaderEncoder;
 import Interfaces.ItemSetGenerator;
 
 public class ItemSetBuilder implements ItemSetGenerator{
@@ -21,12 +21,12 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	private HashMap<Set<Float>, Integer> subsetsMap = new HashMap<Set<Float>, Integer>();
 
 
-	public ItemSetBuilder(HashMap<Integer,List<Float>> colHeaderIdxToColsEncodingVals,
-			List<Set<Float>> encodedTransactions, float minSup){
-		mColHeaderIdxToColsEncodingVals = colHeaderIdxToColsEncodingVals;
-		mEncodedTransactions = encodedTransactions;
+	public ItemSetBuilder(InputReaderEncoder encodedDataObject, float minSup){
+		mColHeaderIdxToColsEncodingVals = encodedDataObject.getColHeaderIdxToEncodedDistinctVals();//colHeaderIdxToColsEncodingVals;
+		mEncodedTransactions = encodedDataObject.getEncodedTransactions();
 		mMinSup = minSup;
 		mTxnsCount = mEncodedTransactions.size();
+		initializeItemSets();
 	}
 
 	public int initializeItemSets(){
@@ -48,7 +48,7 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	
 
 	@Override
-	public HashMap<Set<Float>, Double> getOneFrequentItemsSet() {
+	public HashMap<Set<Float>, Double> getFrequentOneItemsSet() {
 		return mOneItemPrunedSetToSup;
 	}
 	
@@ -169,7 +169,7 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	}
 
 	@Override
-	public HashMap<Set<Float>, Double> getKFrequentItemsSet(HashMap<Set<Float>, Double> kCandidateSet) {
+	public HashMap<Set<Float>, Double> getFrequentKItemsSet(HashMap<Set<Float>, Double> kCandidateSet) {
 		return getPrunedItemset(kCandidateSet);
 	}
 
@@ -245,12 +245,11 @@ public class ItemSetBuilder implements ItemSetGenerator{
 	 * @param itemSet the item set
 	 * @return the support value for item set
 	 */
-	@SuppressWarnings("unchecked")
 	public double getSupportValueForItemSet(Set<Float> itemSet){
 		Double sup = (double) 0;
 		for(int idx=0;idx<mEncodedTransactions.size();idx++){			
 			Set<Float> txnSet = mEncodedTransactions.get(idx);
-			@SuppressWarnings({ "rawtypes" })
+			@SuppressWarnings({ })
 			Set<Float> intersect = new TreeSet<Float>(txnSet);
 			intersect.retainAll(itemSet);
 			if(intersect.size() == itemSet.size()){
