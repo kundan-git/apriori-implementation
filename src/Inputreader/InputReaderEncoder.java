@@ -93,7 +93,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * Prints the headers and unique column values.
 	 */
 	public void printHeadersAndUniqueColVals(){
-		System.out.println("\n********** Encoded Distinct Items*************");
+		System.out.println("\n********** Headers and Unique Column Values*************");
 		if(mColHeaderIdxToColsUnqVals !=null){
 			for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
 				String colsAsStr ="";
@@ -148,6 +148,8 @@ public class InputReaderEncoder implements InputDataFormatter{
 		 * Build encoding for column values
 		 */
 		encodeColumns();
+		
+		//printHeadersAndUniqueColVals();
 		
 		/* Step 3:
 		 * Encode transactions
@@ -260,7 +262,6 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * Encode columns
 	 */
 	private void encodeColumns(){
-		
 		mColHeaderIdxToColsEncoding = new HashMap<Integer,List<Float>>();
 		for(Integer key:mColHeaderIdxToColsUnqVals.keySet()){
 			int unqItemsCount= mColHeaderIdxToColsUnqVals.get(key).size();
@@ -350,6 +351,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 
 					/* If first line and file has header*/
 					mHeaders = line.split(delim);
+				
 					if(mHeaders.length ==1){
 						throw new InputReaderAndEncoderException(InputReaderAndEncoderException.INVALID_COLUMN_LENGTH); 
 					}
@@ -368,6 +370,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 					 * as mentioned in header. Further, process line to 
 					 * to find unique items in each column*/
 					String[] colTokens = line.toLowerCase().split(delim);
+					
 
 					if(isValidRow(colTokens.length)){
 						for(int i=0; i<colTokens.length;i++){
@@ -386,6 +389,14 @@ public class InputReaderEncoder implements InputDataFormatter{
 					}else if(line.equals("\n")){
 						System.out.println("WARN! Skipping row as the row doesn't "
 								+ "have equal tokens as defined in header.");
+					}else{
+						System.out.println("Error >> #columnsInRow != #columnsInHeader...");
+						System.out.println("COLS_COUNT:"+colTokens.length);
+						System.out.println("HEADERS_COUNT:"+mHeaders.length);
+						String hdrStr="";
+						for(int k=0;k<mHeaders.length;k++){hdrStr=hdrStr+mHeaders[k];System.out.println(k+"-->"+mHeaders[k]);}
+						System.out.println(hdrStr);
+						System.out.println(line);
 					}
 				}
 				colCount++;
