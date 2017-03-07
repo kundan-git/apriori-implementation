@@ -98,17 +98,19 @@ public class RuleBuilder {
 		return rulesAndSummary;
 	}
 
-	public void writeRulesAndSummaryToFile(String resultFilepath,float minSup,long executionTime){
+	public String getRulesAndSummary(String resultFilepath,float minSup,long executionTime){
+		String result = getRulesAndSummary(minSup,executionTime);
+		return result;
+	}
+
+	public void writeRulesAndSummaryToFile(String resultFilepath,float minSup,long executionTime) throws IOException{
 		String result = getRulesAndSummary(minSup,executionTime);
 		File file = new File(resultFilepath);
 		BufferedWriter bufWriter = null;
-		try {
-			bufWriter = new BufferedWriter(new FileWriter(file));
-			bufWriter.write(result);
-			bufWriter.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+
+		bufWriter = new BufferedWriter(new FileWriter(file));
+		bufWriter.write(result);
+		bufWriter.close();
 	}
 
 	public void generateRules(){

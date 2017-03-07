@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -18,13 +20,18 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.UIManager;
 import javax.swing.text.DefaultCaret;
 
-public class Apriori
+import Core.AprioriDriver;
+import Exceptions.InputReaderAndEncoderException;
+import Inputreader.InputDataDelimiters;
+
+public class AprioriUi
 {
     private static String ENTER = "Enter";
     static JButton enterButton;
     public static JTextArea output;
+    public static JComboBox<String> hasHeaderCombo;
+    public static JComboBox<String> delimCombo;
     public static JTextField inputPath;
-    public static JTextField outputPath;
     public static JTextField minSup;
     public static JTextField minConf;
     static JFrame frame;
@@ -50,20 +57,14 @@ public class Apriori
     	JLabel inputPathLabel = new JLabel("Data File:");
         inputPath.setToolTipText("Enter data file path.");
 
-        
-        outputPath = new JTextField(15);
-        JLabel outputPathLabel = new JLabel("Rules Output Directory:");
-        outputPath.setToolTipText("Rules.txt gets generated in this directory.");
-        
-        
-        JComboBox<String> delimCombo = new JComboBox<String>();
+        delimCombo = new JComboBox<String>();
         delimCombo.addItem("SPACE");
         delimCombo.addItem("COMMA");
         JLabel delimLabel = new JLabel("Delimiter:");
         delimCombo.setToolTipText("Select delimiter used in file...");
         
         JLabel hasHeaderLabel = new JLabel("Has Header:");
-        JComboBox<String> hasHeaderCombo = new JComboBox<String>();
+        hasHeaderCombo = new JComboBox<String>();
         hasHeaderCombo.addItem("TRUE");
         hasHeaderCombo.addItem("FALSE");
         hasHeaderCombo.setToolTipText("Is file having headers?");
@@ -108,14 +109,13 @@ public class Apriori
         inputPanel_1.add(minSup);
         inputPanel_1.add(confLabel);
         inputPanel_1.add(minConf);
-        inputPanel_1.add(outputPathLabel);
-        inputPanel_1.add(outputPath);
+       
         inputPanel_1.add(enterButton);
         
         /* Scroller */
         JScrollPane scroller = new JScrollPane(output);
         scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         
         /*Update the panel*/
         panel = new JPanel();
@@ -135,10 +135,9 @@ public class Apriori
         frame.setResizable(false);
         
         /*Set defaults*/
-        inputPath.setText("./data.txt");
+        inputPath.setText("./data1");
         minSup.setText("0.2");
         minConf.setText("0.2");
-        outputPath.setText("./");
         inputPath.requestFocus();
     }
 
@@ -163,10 +162,6 @@ public class Apriori
     			ret = "Please enter the input file path.";
     			return ret;
     		}
-    		if (outputPath.getText().trim().equals("")){
-    			ret = "Please enter the input file directory path.";
-    			return ret;
-    		}
     		
     		if (!validateConfOrSup(minSup.getText().trim())){
     			ret = "Invalid value for minimum support.";
@@ -188,8 +183,29 @@ public class Apriori
         		String cmd = ev.getActionCommand();
                 if (ENTER.equals(cmd))
                 {
-                    output.append(inputPath.getText());
-                    output.append("\n");
+                	String ipFilePath = inputPath.getText();
+                	String outFilePath = System.getProperty("user.dir")+File.separator+"Rules.txt";
+                	float conf =  Float.parseFloat(minConf.getText());
+                	float sup =  Float.parseFloat(minSup.getText());
+                	String header = hasHeaderCombo.getSelectedItem().toString();
+                	String delim = delimCombo.getSelectedItem().toString();
+                	
+                	boolean isHeader = header.equals("TRUE") ? true:false;
+                	InputDataDelimiters delimEnum = 
+                			delim.equals("SPACE") ?  InputDataDelimiters.SPACE: InputDataDelimiters.COMMA;
+                	AprioriDriver aprioriDriver = new AprioriDriver();
+                	String result="";
+                	try {
+						result = aprioriDriver.RunApriori(ipFilePath,delimEnum,isHeader,sup,conf,outFilePath);
+						output.append("The result is in:\n"+outFilePath+" file.");
+	                	output.append("\n\n"+result);
+					}catch (IOException e) {
+						output.append("ERROR >> Unable to read/write file.\nCheck file path and permissions.");
+						return;
+					}catch( InputReaderAndEncoderException ireE){
+						output.append("ERROR >> "+ireE.getMessage());
+						return;
+					}
                 }	
         	}else{
         		output.append("Error >> Invalid input>"+validateOutput);
