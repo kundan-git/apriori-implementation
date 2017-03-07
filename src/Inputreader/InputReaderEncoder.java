@@ -35,7 +35,6 @@ public class InputReaderEncoder implements InputDataFormatter{
 	/** 
 	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getColumnsCount()
 	 */
-	@Override
 	public double getColumnsCount() {
 		if(mHeaders!=null){
 			mColsCnt = mHeaders.length; 
@@ -46,7 +45,6 @@ public class InputReaderEncoder implements InputDataFormatter{
 	/** 
 	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getTransactionsCount()
 	 */
-	@Override
 	public double getTransactionsCount() {
 		return mTxnsCnt;
 	}
@@ -54,7 +52,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 	/** 
 	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getColHeaderToColsUnqVals()
 	 */
-	@Override
+	
 	public HashMap<Integer, List<String>> getColHeaderIdxToColsUnqVals() {
 		return mColHeaderIdxToColsUnqVals;
 	}
@@ -62,7 +60,6 @@ public class InputReaderEncoder implements InputDataFormatter{
 	/**
 	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#getEncodedTransactions()
 	 */
-	@Override
 	public List<Set<Float>> getEncodedTransactions() {
 		return mEncodedTxns;
 	}
@@ -128,7 +125,6 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * @throws InputReaderAndEncoderException 
 	 * @see ca.dal.apriori.Interfaces.InputDataFormatter#loadDataFromFile(java.lang.String)
 	 */
-	@Override
 	public void loadAndEncodeDataFromFile(
 			String filepath, InputDataDelimiters delimiter, boolean hasHeader) 
 					throws FileNotFoundException, IOException, InputReaderAndEncoderException {
@@ -214,34 +210,34 @@ public class InputReaderEncoder implements InputDataFormatter{
 	 * @throws FileNotFoundException 
 	 */
 	private void encodeTransactions() throws FileNotFoundException, IOException{
-		
+
 		String delim = getDelimiter(mDelimiter);
 		mEncodedTxns = new ArrayList<Set<Float>>();
-		try(BufferedReader br= new BufferedReader(new FileReader(mFilepath))){
-			double lineCount=0;
-			for(String line; (line = br.readLine()) != null;){
+		BufferedReader br= new BufferedReader(new FileReader(mFilepath));
+		double lineCount=0;
+		for(String line; (line = br.readLine()) != null;){
 
-				line = preProcessLine(line);
-				if(mHasHeader &&(lineCount==0)){
-					lineCount++;
-					continue;
+			line = preProcessLine(line);
+			if(mHasHeader &&(lineCount==0)){
+				lineCount++;
+				continue;
+			}
+
+
+			/* Check if the row has equal number of tokens
+			 * as mentioned in header. Further, process line to 
+			 * to find unique items in each column*/
+			String[] colTokens = line.toLowerCase().split(delim);
+			if(isValidRow(colTokens.length)){
+				Set<Float> txnSet = new HashSet<Float>();
+				for(int idx=0;idx<colTokens.length;idx++){
+					Float encVal = getTokenEncodeValue(idx,colTokens[idx]);
+					txnSet.add(encVal);
 				}
-				
-				
-				/* Check if the row has equal number of tokens
-				 * as mentioned in header. Further, process line to 
-				 * to find unique items in each column*/
-				String[] colTokens = line.toLowerCase().split(delim);
-				if(isValidRow(colTokens.length)){
-					Set<Float> txnSet = new HashSet<Float>();
-					for(int idx=0;idx<colTokens.length;idx++){
-						Float encVal = getTokenEncodeValue(idx,colTokens[idx]);
-						txnSet.add(encVal);
-					}
-					mEncodedTxns.add(txnSet);
-				}
+				mEncodedTxns.add(txnSet);
 			}
 		}
+
 	}
 	
 	
@@ -342,75 +338,73 @@ public class InputReaderEncoder implements InputDataFormatter{
 		mColHeaderIdxToColsUnqVals = new HashMap<Integer,List<String>>();
 		String delim = getDelimiter(mDelimiter);
 
-		try(BufferedReader br= new BufferedReader(new FileReader(mFilepath))){
-			for(String line; (line = br.readLine()) != null;){
+		BufferedReader br= new BufferedReader(new FileReader(mFilepath));
+		for(String line; (line = br.readLine()) != null;){
 
-				line = preProcessLine(line);
+			line = preProcessLine(line);
 
-				if((colCount==0) && mHasHeader){
+			if((colCount==0) && mHasHeader){
 
-					/* If first line and file has header*/
-					mHeaders = line.split(delim);
-				
-					if(mHeaders.length ==1){
-						throw new InputReaderAndEncoderException(InputReaderAndEncoderException.INVALID_COLUMN_LENGTH); 
-					}
+				/* If first line and file has header*/
+				mHeaders = line.split(delim);
 
-				} else if((colCount==0) && !mHasHeader){
-					/* If first line and file does not have header*/
-					int colCnt= line.split(delim).length;
-					mHeaders = new String[colCnt];
-					for(int i=0; i<colCnt;i++){
-						mHeaders[i] = "col_"+i;
-					}
-
-				}else{
-
-					/* Check if the row has equal number of tokens
-					 * as mentioned in header. Further, process line to 
-					 * to find unique items in each column*/
-					String[] colTokens = line.toLowerCase().split(delim);
-					
-
-					if(isValidRow(colTokens.length)){
-						for(int i=0; i<colTokens.length;i++){
-							List<String> existingColVals = mColHeaderIdxToColsUnqVals.get(i);
-							String token = colTokens[i].trim();
-
-							if(existingColVals==null){
-								List<String> vals= new ArrayList<String>();
-								vals.add(token);
-								mColHeaderIdxToColsUnqVals.put(i, vals);	
-							}else if (!existingColVals.contains(token)){
-								existingColVals.add(token);
-								mColHeaderIdxToColsUnqVals.put(i, existingColVals);
-							}
-						}	
-					}else if(line.equals("\n")){
-						System.out.println("WARN! Skipping row as the row doesn't "
-								+ "have equal tokens as defined in header.");
-					}else{
-						System.out.println("Error >> #columnsInRow != #columnsInHeader...");
-						System.out.println("COLS_COUNT:"+colTokens.length);
-						System.out.println("HEADERS_COUNT:"+mHeaders.length);
-						String hdrStr="";
-						for(int k=0;k<mHeaders.length;k++){hdrStr=hdrStr+mHeaders[k];System.out.println(k+"-->"+mHeaders[k]);}
-						System.out.println(hdrStr);
-						System.out.println(line);
-					}
+				if(mHeaders.length ==1){
+					throw new InputReaderAndEncoderException(InputReaderAndEncoderException.INVALID_COLUMN_LENGTH); 
 				}
-				colCount++;
+
+			} else if((colCount==0) && !mHasHeader){
+				/* If first line and file does not have header*/
+				int colCnt= line.split(delim).length;
+				mHeaders = new String[colCnt];
+				for(int i=0; i<colCnt;i++){
+					mHeaders[i] = "col_"+i;
+				}
+
+			}else{
+
+				/* Check if the row has equal number of tokens
+				 * as mentioned in header. Further, process line to 
+				 * to find unique items in each column*/
+				String[] colTokens = line.toLowerCase().split(delim);
+
+
+				if(isValidRow(colTokens.length)){
+					for(int i=0; i<colTokens.length;i++){
+						List<String> existingColVals = mColHeaderIdxToColsUnqVals.get(i);
+						String token = colTokens[i].trim();
+
+						if(existingColVals==null){
+							List<String> vals= new ArrayList<String>();
+							vals.add(token);
+							mColHeaderIdxToColsUnqVals.put(i, vals);	
+						}else if (!existingColVals.contains(token)){
+							existingColVals.add(token);
+							mColHeaderIdxToColsUnqVals.put(i, existingColVals);
+						}
+					}	
+				}else if(line.equals("\n")){
+					System.out.println("WARN! Skipping row as the row doesn't "
+							+ "have equal tokens as defined in header.");
+				}else{
+					System.out.println("Error >> #columnsInRow != #columnsInHeader...");
+					System.out.println("COLS_COUNT:"+colTokens.length);
+					System.out.println("HEADERS_COUNT:"+mHeaders.length);
+					String hdrStr="";
+					for(int k=0;k<mHeaders.length;k++){hdrStr=hdrStr+mHeaders[k];System.out.println(k+"-->"+mHeaders[k]);}
+					System.out.println(hdrStr);
+					System.out.println(line);
+				}
 			}
+			colCount++;
 		}
+
 		mTxnsCnt =colCount;
 	}
-
-	@Override
+	
 	public HashMap<Integer, List<Float>> getColHeaderIdxToEncodedDistinctVals() {
 		return mColHeaderIdxToColsEncoding;
 	}
 
-	@Override
 	public String[] getColumnHeaders() {
 		return mHeaders;
 	}

@@ -45,30 +45,24 @@ public class AprioriDriver {
 		/* Step 4.3: Generate candidate,frequent k-items sets until we get empty frequent set.*/
 		while(frequentKItemSet.size()!=0){
 			cnt =cnt+1;
-			System.out.println("iteration:"+cnt);
 			ruleBuilder.addFrequentItemSet(frequentKItemSet);
 
-			System.out.println("Generating CS");
-			
 			/* N.O.T.E: Candidate set pruning is done internally by getKCandidateItemsSet() method.*/
 			HashMap<Set<Float>, Double> candidateSet = itemSetBuilder.getKCandidateItemsSet(frequentKItemSet);
-			System.out.println("Generating FS");
 			frequentKItemSet = itemSetBuilder.getFrequentKItemsSet(candidateSet);
 		}
 
 		/* Step 5: Generate all rules.*/
 		ruleBuilder.generateRules();
 
-		
+
 		final long endTime = System.currentTimeMillis();
 		ruleBuilder.writeRulesAndSummaryToFile(resultFilePath,minSup,(endTime-startTime));
 		String rules =ruleBuilder.getRulesAndSummary(resultFilePath,minSup,(endTime-startTime));
 		return rules;
 	}
 
-	public static void main(String[] argv) {
-
-		
+	public static  void RunAprioriCli(){
 		float minSup = 0;
 		float minConf =0;
 
@@ -124,8 +118,10 @@ public class AprioriDriver {
 		}
 		System.out.println("The result is in the "+outFilePath+" file.");
 		System.out.println("\n*** Algorithm Finished ***");
+	}
 
-
+	public static void main(String[] argv) {
+		 RunAprioriCli();
 	}
 
 }

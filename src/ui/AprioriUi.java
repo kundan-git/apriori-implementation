@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Scanner;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -24,32 +25,78 @@ import Core.AprioriDriver;
 import Exceptions.InputReaderAndEncoderException;
 import Inputreader.InputDataDelimiters;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class AprioriUi.
+ */
 public class AprioriUi
 {
+    
+    /** The enter. */
     private static String ENTER = "Enter";
+    
+    /** The enter button. */
     static JButton enterButton;
+    
+    /** The output. */
     public static JTextArea output;
+    
+    /** The has header combo. */
     public static JComboBox<String> hasHeaderCombo;
+    
+    /** The delim combo. */
     public static JComboBox<String> delimCombo;
+    
+    /** The input path. */
     public static JTextField inputPath;
+    
+    /** The min sup. */
     public static JTextField minSup;
+    
+    /** The min conf. */
     public static JTextField minConf;
+    
+    /** The frame. */
     static JFrame frame;
+    
+    /** The panel. */
     static JPanel panel;
 
-    public static void main(String... args)
+    /**
+     * The main method.
+     *
+     * @param args the arguments
+     */
+    public static void main(String[] args)
     {
-        try
-        {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-        createFrame();
+    	System.out.println("Length:"+args.length);
+    	if(args.length > 0){
+    		AprioriDriver aprioriDriver = new AprioriDriver();
+    		aprioriDriver.RunAprioriCli();
+    		String outFilePath = System.getProperty("user.dir")+File.separator+"Rules.txt";
+    		Scanner reader = new Scanner(System.in);
+
+    		/* Read input file path.*/
+    		System.out.println("Enter the filepath: ");
+    		String filepath = reader.nextLine(); 
+
+    		
+    	}else{
+            try
+            {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            }
+            catch (Exception ex)
+            {
+                ex.printStackTrace();
+            }
+            createFrame();
+    	}
     }
 
+    /**
+     * Creates the frame.
+     */
     public static void createFrame()
     {
         
@@ -137,10 +184,19 @@ public class AprioriUi
         inputPath.requestFocus();
     }
 
+    /**
+     * The Class AprioriCoreInvoker.
+     */
     public static class AprioriCoreInvoker implements ActionListener
     {
 
-    	private boolean validateConfOrSup(String ip){
+    	/**
+	     * Validate conf or sup.
+	     *
+	     * @param ip the ip
+	     * @return true, if successful
+	     */
+	    private boolean validateConfOrSup(String ip){
     		try{
     			float val = Float.parseFloat(ip);
     			if((val<0) || (val>1)){
@@ -152,7 +208,12 @@ public class AprioriUi
     		return true;
     	}
     	
-    	private String validateInput(){
+    	/**
+	     * Validate input.
+	     *
+	     * @return the string
+	     */
+	    private String validateInput(){
     		String ret = "okay";
     		if (inputPath.getText().trim().equals("")){
     			ret = "Please enter the input file path.";
@@ -170,6 +231,9 @@ public class AprioriUi
     		return ret;
     	}
     	
+        /* (non-Javadoc)
+         * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+         */
         public void actionPerformed(final ActionEvent ev)
         {
         	output.setText("");
