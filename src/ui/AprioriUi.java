@@ -53,7 +53,7 @@ public class AprioriUi
     public static void createFrame()
     {
         
-    	inputPath = new JTextField(35);
+    	inputPath = new JTextField(45);
     	JLabel inputPathLabel = new JLabel("Data File:");
         inputPath.setToolTipText("Enter data file path.");
 
@@ -63,7 +63,6 @@ public class AprioriUi
         JLabel delimLabel = new JLabel("Delimiter:");
         delimCombo.setToolTipText("Select delimiter used in file...");
         
-        JLabel hasHeaderLabel = new JLabel("Has Header:");
         hasHeaderCombo = new JComboBox<String>();
         hasHeaderCombo.addItem("TRUE");
         hasHeaderCombo.addItem("FALSE");
@@ -85,7 +84,7 @@ public class AprioriUi
         inputPath.setActionCommand(ENTER);
         inputPath.addActionListener(aprioriInvoker);
         
-        output = new JTextArea(15, 50);
+        output = new JTextArea(15, 100);
         output.setEditable(false);
         output.setWrapStyleWord(true);
         
@@ -99,17 +98,14 @@ public class AprioriUi
         inputPanel.add(inputPath);
         inputPanel.add(delimLabel);
         inputPanel.add(delimCombo);
-        inputPanel.add(hasHeaderLabel);
-        inputPanel.add(hasHeaderCombo);
+        inputPanel.add(supLabel);
+        inputPanel.add(minSup);
+        inputPanel.add(confLabel);
+        inputPanel.add(minConf);
         
         /* Row 2*/
         JPanel inputPanel_1 = new JPanel();
         inputPanel_1.setLayout(new FlowLayout());
-        inputPanel_1.add(supLabel);
-        inputPanel_1.add(minSup);
-        inputPanel_1.add(confLabel);
-        inputPanel_1.add(minConf);
-       
         inputPanel_1.add(enterButton);
         
         /* Scroller */
@@ -187,16 +183,14 @@ public class AprioriUi
                 	String outFilePath = System.getProperty("user.dir")+File.separator+"Rules.txt";
                 	float conf =  Float.parseFloat(minConf.getText());
                 	float sup =  Float.parseFloat(minSup.getText());
-                	String header = hasHeaderCombo.getSelectedItem().toString();
                 	String delim = delimCombo.getSelectedItem().toString();
                 	
-                	boolean isHeader = header.equals("TRUE") ? true:false;
                 	InputDataDelimiters delimEnum = 
                 			delim.equals("SPACE") ?  InputDataDelimiters.SPACE: InputDataDelimiters.COMMA;
                 	AprioriDriver aprioriDriver = new AprioriDriver();
                 	String result="";
                 	try {
-						result = aprioriDriver.RunApriori(ipFilePath,delimEnum,isHeader,sup,conf,outFilePath);
+						result = aprioriDriver.RunApriori(ipFilePath,delimEnum,true,sup,conf,outFilePath);
 						output.append("The result is in:\n"+outFilePath+" file.");
 	                	output.append("\n\n"+result);
 					}catch (IOException e) {

@@ -23,7 +23,7 @@ public class AprioriDriver {
 		final long startTime = System.currentTimeMillis();
 
 		/* Step 1: Load the data and encode it.*/
-		InputReaderEncoder encodedDataObj= new InputReaderEncoder(inputFilePath,delimiter,true);
+		InputReaderEncoder encodedDataObj= new InputReaderEncoder(inputFilePath,delimiter,hasHeader);
 		encodedDataObj.printEncodedTransactions();
 
 		/* Step 2: Initialize Item-set Builder. */
