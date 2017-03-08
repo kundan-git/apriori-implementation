@@ -237,6 +237,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 				mEncodedTxns.add(txnSet);
 			}
 		}
+		br.close();
 
 	}
 	
@@ -349,6 +350,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 				mHeaders = line.split(delim);
 
 				if(mHeaders.length ==1){
+					br.close();
 					throw new InputReaderAndEncoderException(InputReaderAndEncoderException.INVALID_COLUMN_LENGTH); 
 				}
 
@@ -397,7 +399,7 @@ public class InputReaderEncoder implements InputDataFormatter{
 			}
 			colCount++;
 		}
-
+		br.close();
 		mTxnsCnt =colCount;
 	}
 	
