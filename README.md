@@ -1,4 +1,3 @@
-==========================================
 Summary
 ==========================================
 - Implementation of Apriori-Algorithm in Java.
@@ -6,7 +5,7 @@ Summary
 - Includes pruning of candidate-set and search pruning for 
   rule gneration (bonus-part).
 
-==========================================
+
 How to Run
 ==========================================
 - Step 1: Double click the  Apriori.jar
@@ -21,7 +20,7 @@ How to Run
 	2.	File must exist at entered path.
 	3.	Support and Confidence values must be between 0 and 1.
 
-==========================================
+
 How to Build
 ==========================================
 - Step 1: Install Maven
@@ -31,7 +30,6 @@ How to Build
 - Step 2: Run "mvn package" in apriori-implementation directory. 
 	This would generate Apriori.jar in 'apriori-implementation\target\' folder.
 	
-==========================================
 Architecture Overview:
 ==========================================
 	InputreaderEncoder
@@ -51,7 +49,7 @@ Architecture Overview:
 			Use pruning for efficient rule generation.
 		9.	Write rules to a file.
 		
-==========================================
+
 Code Overview:
 ==========================================
 	The program is divided into following submodules(packages):
@@ -78,7 +76,6 @@ Code Overview:
 	| 7  | Ui				| Implements the UI which uses Core to run Apriori|
 	+----+------------------+-------------------------------------------------+	
 
-==========================================
 Code Details
 ==========================================
 InputReaderEncoder.java: 
@@ -181,7 +178,6 @@ AprioriUi.java:
 			public static void createFrame()
 			public static class AprioriCoreInvoker implements ActionListener
 	
-==========================================
 BONUS PART EXPLANATION
 ==========================================
 1.	Candidate item-set pruning:
